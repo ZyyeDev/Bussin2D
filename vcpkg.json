@@ -1,0 +1,10 @@
+{
+  "name": "bussin2d",
+  "version": "0.0.1",
+  "dependencies": [
+    "sdl2",
+    "sdl2-image",
+    "luajit",
+    "sdl2-mixer"
+  ]
+}

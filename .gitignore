@@ -1,0 +1,15 @@
+# Build directories
+build/
+cmake-build-*/
+out/
+
+# Visual Studio
+.vs/
+.vscode/
+*.vcxproj*
+*.sln
+
+*.exe
+*.dll
+*.so
+*.dylib
