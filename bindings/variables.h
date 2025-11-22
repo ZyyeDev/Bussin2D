@@ -3,7 +3,7 @@
 #include "modules/graphics/renderer.h"
 #include "modules/window/window.h"
 #include "modules/audio/audio.h"
-#include "modules/audio/keyboard.h"
+#include "modules/keyboard/keyboard.h"
 
 #ifndef LUA_RENDERER
     #define LUA_RENDERER

@@ -62,6 +62,6 @@ void register_keyboard_bindings(lua_State* L){
     lua_pushcfunction(L, lua_keyboard_isReleased);
     lua_setfield(L, -2, "isReleased");
 
-    lua_setfield(L -2, "keyboard");
-    lua_setglobal(L, "buss")
+    lua_setfield(L, -2, "keyboard");
+    lua_setglobal(L, "buss");
 }
