@@ -28,4 +28,5 @@ void register_all_bindings(lua_State* L){
     register_graphics_bindings(L);
     register_audio_bindings(L);
     register_keyboard_bindings(L);
+    register_mouse_bindings(L);
 };

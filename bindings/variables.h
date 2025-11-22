@@ -4,6 +4,7 @@
 #include "modules/window/window.h"
 #include "modules/audio/audio.h"
 #include "modules/keyboard/keyboard.h"
+#include "modules/mouse/mouse.h"
 
 #ifndef LUA_RENDERER
     #define LUA_RENDERER
@@ -24,4 +25,9 @@
     #define LUA_KEYBOARD
 
     static Keyboard* g_keyboard = nullptr;
+#endif
+#ifndef LUA_MOUSE
+    #define LUA_MOUSE
+
+    static Mouse* g_mouse = nullptr;
 #endif
