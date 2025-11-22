@@ -32,3 +32,8 @@ bool Keyboard::isReleased(SDL_Scancode key){
 SDL_Scancode Keyboard::getScancodeFromName(const char* name){
     return SDL_GetScancodeFromName(name);
 }
+
+void Keyboard::update(){
+    pressedThisFrame.clear();
+    releasedThisFrame.clear();
+}
