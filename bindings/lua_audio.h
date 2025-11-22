@@ -158,7 +158,7 @@ void register_audio_bindings(lua_State* L){
     lua_pushcfunction(L, lua_sound_pause);
     lua_setfield(L, -2, "pause");
 
-    lua_pushcfunction(L, lua_sound_play);
+    lua_pushcfunction(L, lua_sound_resume);
     lua_setfield(L, -2, "resume");
 
     lua_pushcfunction(L, lua_sound_setVolume);
