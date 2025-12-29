@@ -3,14 +3,15 @@
 #include <SDL2/SDL_image.h>
 
 Texture::Texture() {
-    texture = nullptr;
+    textureID = 0;
     width = 0;
     height = 0;
+    transparency = 1.0f;
 };
 
 Texture::~Texture(){
-    if (texture){
-        SDL_DestroyTexture(texture);
+    if (textureID){
+        glDeleteTextures(1, &textureID);
     }
 }
 
@@ -21,38 +22,41 @@ bool Texture::loadFromFile(const std::string& path, SDL_Renderer* renderer){
         return false;
     }
 
-    texture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (!texture){
-        std::cerr << "Failed to create texture: " << SDL_GetError() << std::endl;
-        SDL_FreeSurface(surface);
+    width = surface->w;
+    height = surface->h;
+
+    SDL_Surface* formattedSurface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32, 0);
+    SDL_FreeSurface(surface);
+
+    if (!formattedSurface){
+        std::cerr << "Failed to convert surface format: " << SDL_GetError() << std::endl;
         return false;
     }
 
-    width = surface->w;
-    height = surface->h;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_RGBA,
+        width,
+        height,
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        formattedSurface->pixels
+    );
 
     SDL_FreeSurface(surface);
     return true;
 }
 
-void Texture::render(SDL_Renderer* renderer, int x, int y, int w, int h){
-    if (!texture) return;
-
-    SDL_Rect rect;
-    rect.x = x;
-    rect.y = y;
-    if (w != -1){
-        rect.w = w;
-    }else{
-        // use original width if not specified
-        rect.w = width;
-    }
-    if (w != -1){
-        rect.h = h;
-    }else{
-        // use original height if not specified
-        rect.h = height;
-    }
-
-    SDL_RenderCopy(renderer, texture, nullptr, &rect);
+void Texture::bind(){
+    glBindTexture(GL_TEXTURE_2D, textureID);
 }

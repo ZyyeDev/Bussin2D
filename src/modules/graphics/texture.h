@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL.h>
 #include <string>
+#include "glad.h"
 
 class Texture{
 public:
@@ -9,13 +10,20 @@ public:
     ~Texture();
 
     bool loadFromFile(const std::string& path, SDL_Renderer* renderer);
-    void render(SDL_Renderer* renderer, int x, int y, int w = -1, int h = -1);
+    void bind();
 
+    void setTransparency(Uint8 newTransparency) {
+        transparency = newTransparency;
+    }
+
+    int getTransparency() const { return transparency; }
     int getWidth() const { return width; }
-    int getHeight() const {return height; }
-    bool isLoaded() const { return texture != nullptr; }
+    int getHeight() const { return height; }
+    bool isLoaded() const { return textureID != 0; }
+    GLuint getID() const { return textureID; }
 private:
-    SDL_Texture* texture;
+    GLuint textureID;
     int width;
     int height;
+    Uint8 transparency;
 };

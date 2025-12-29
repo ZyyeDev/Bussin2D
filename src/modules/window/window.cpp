@@ -3,13 +3,12 @@
 
 Window::Window() {
     window = nullptr;
-    renderer = nullptr;
     isRunning = false;
 }
 
 Window::~Window(){
-    if (renderer){
-        SDL_DestroyRenderer(renderer);
+    if (glContext){
+        SDL_GL_DeleteContext(glContext);
     }
     if (window){
         SDL_DestroyWindow(window);
@@ -17,11 +16,19 @@ Window::~Window(){
     SDL_Quit();
 }
 
-bool Window::init(int width, int height, const std::string& title){
+bool Window::init(int w, int h, const std::string& title){
+    width = w;
+    height = h;
+    
     if (SDL_Init(SDL_INIT_VIDEO) < 0){
         std::cerr << "STL init failed: " << SDL_GetError() << std::endl;
         return false;
     }
+
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
     window = SDL_CreateWindow(
         title.c_str(),
@@ -29,7 +36,7 @@ bool Window::init(int width, int height, const std::string& title){
         SDL_WINDOWPOS_CENTERED,
         width,
         height,
-        SDL_WINDOW_SHOWN
+        SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL
     );
 
     if (!window){
@@ -37,27 +44,31 @@ bool Window::init(int width, int height, const std::string& title){
         return false;
     }
 
-    renderer = SDL_CreateRenderer(
-        window,
-        -1,
-        SDL_RENDERER_ACCELERATED
-    );
-    if (!renderer){
-        std::cerr << "renderer creation failed: " << SDL_GetError() << std::endl;
+    glContext = SDL_GL_CreateContext(window);
+    if (!glContext){
+        std::cerr << "OpenGL error: " << SDL_GetError() << std::endl;
         return false;
     }
+
+    if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress)){
+        std::cerr << "Failed to initialize GLAD" << std::endl;
+        return false;
+    }
+
+    // vsync
+    SDL_GL_SetSwapInterval(1);
 
     isRunning = true;
     return true;
 }
 
 void Window::clear(unsigned char r, unsigned char g, unsigned char b){
-    SDL_SetRenderDrawColor(renderer, r,g,b,255);
-    SDL_RenderClear(renderer);
+    glClearColor(r/255.0f, g/255.0f, b/255.0f, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void Window::present(){
-    SDL_RenderPresent(renderer);
+    SDL_GL_SwapWindow(window);
 }
 
 void Window::pollEvents(){

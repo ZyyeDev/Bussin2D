@@ -9,7 +9,7 @@
 
 void init_renderer(){
     if (g_window && !g_renderer){
-        g_renderer = new Renderer(g_window->getRenderer());
+        g_renderer = new Renderer(g_window->getWidth(), g_window->getHeight());
     }
 }
 
@@ -124,6 +124,62 @@ static int lua_graphics_draw(lua_State* L) {
     return 0;
 }
 
+// Lua: buss.graphics.setTransparency(textureId, transparency)
+static int lua_graphics_setTransparency(lua_State* L) {
+    if (!g_renderer) init_renderer();
+    
+    int textureId = luaL_checkinteger(L, 1);
+    Uint8 transparency = (Uint8)luaL_checknumber(L, 2);
+    
+    if (g_renderer) {
+        g_renderer->setTransparency(textureId, transparency);
+    }
+    return 0;
+}
+
+// Lua buss.graphics.loadShader(vertex, fragment)
+static int lua_graphics_loadShader(lua_State* L) {
+    if (!g_renderer) init_renderer();
+    
+    const char* vertPath = luaL_checkstring(L, 1);
+    const char* fragPath = luaL_checkstring(L, 2);
+    
+    if (g_renderer) {
+        int id = g_renderer->loadShader(vertPath, fragPath);
+        lua_pushinteger(L, id);
+        return 1;
+    }
+    
+    lua_pushinteger(L, -1);
+    return 1;
+}
+
+// Lua: buss.graphics.useShader(shader)
+static int lua_graphics_useShader(lua_State* L) {
+    if (!g_renderer) init_renderer();
+    
+    int shaderId = luaL_checkinteger(L, 1);
+    
+    if (g_renderer) {
+        g_renderer->useShader(shaderId);
+    }
+    return 0;
+}
+
+// Lua: buss.graphics.setShaderFloat(shaderId, paramName, value)
+static int lua_graphics_setShaderFloat(lua_State* L) {
+    if (!g_renderer) init_renderer();
+    
+    int shaderId = luaL_checkinteger(L, 1);
+    const char* name = luaL_checkstring(L, 2);
+    float value = luaL_checknumber(L, 3);
+    
+    if (g_renderer) {
+        g_renderer->setShaderFloat(shaderId, name, value);
+    }
+    return 0;
+}
+
 void register_graphics_bindings(lua_State* L){
     lua_getglobal(L, "buss");
     if (lua_isnil(L, -1)){
@@ -150,6 +206,18 @@ void register_graphics_bindings(lua_State* L){
     
     lua_pushcfunction(L, lua_graphics_draw);
     lua_setfield(L, -2, "draw");
+    
+    lua_pushcfunction(L, lua_graphics_setTransparency);
+    lua_setfield(L, -2, "setTransparency");
+
+    lua_pushcfunction(L, lua_graphics_loadShader);
+    lua_setfield(L, -2, "loadShader");
+
+    lua_pushcfunction(L, lua_graphics_useShader);
+    lua_setfield(L, -2, "useShader");
+
+    lua_pushcfunction(L, lua_graphics_setShaderFloat);
+    lua_setfield(L, -2, "setShaderFloat");
 
     lua_setfield(L, -2, "graphics");
     lua_setglobal(L, "buss");

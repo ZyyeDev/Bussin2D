@@ -5,24 +5,16 @@
 #include <unordered_map>
 #include <string>
 
+#include "shader.h"
+//#include "glad.h"
 #include "texture.h"
 
 class Renderer{
 public:
-    Renderer(SDL_Renderer* sdlRenderer);
+    Renderer(int width, int height);
     ~Renderer();
 
     void drawRect(
-        int x,
-        int y,
-        int w,
-        int h,
-        unsigned char r,
-        unsigned char g,
-        unsigned char b,
-        unsigned char a = 255
-    );
-    void drawRectFilled(
         int x,
         int y,
         int w,
@@ -44,6 +36,16 @@ public:
         unsigned char b,
         unsigned char a = 255
     );
+    void drawLine(
+        int x1,
+        int y1,
+        int x2,
+        int y2,
+        unsigned char r,
+        unsigned char g,
+        unsigned char b,
+        unsigned char a
+    );
     void drawCircle(
         int centerX,
         int centerY,
@@ -53,20 +55,33 @@ public:
         unsigned char b,
         unsigned char a = 255
     );
-    void drawLine(
-        int x1,
-        int y1,
-        int x2,
-        int y2,
-        unsigned char r,
-        unsigned char g,
-        unsigned char b,
-        unsigned char a = 255
-    );
+
+    void drawText(std::string Text, int x, int y, int h, int w);
 
     int loadTexture(const std::string& path);
-    void drawTexture(int textureId, int x, int y, int w = -1, int h = -1);
+    void drawTexture(int textureId, int x, int y, int h = -1, int w = -1);
+    void setTransparency(int textureId, Uint8 transparency);
+
+    int loadShader(const std::string& vertPath, const std::string& fragPath);
+    void useShader(int shaderId);
+    void setShaderFloat(int shaderId, const char* name, float value);
+    void setShaderVec2(int shaderId, const char* name, float x, float y);
+    void setShaderVec3(int shaderId, const char* name, float x, float y, float z);
+    void setShaderVec4(int shaderId, const char* name, float x, float y, float z, float w);
+    void setShaderInt(int shaderId, const char* name, int value);
 private:
+    GLuint VAO, VBO;
+    GLuint textureVAO, textureVBO;
+
+    std::shared_ptr<Shader> defaultShader;
+    std::shared_ptr<Shader> currentShader;
+    std::shared_ptr<Shader> textureShader;
+    std::unordered_map<int, std::shared_ptr<Shader>> shaders;
+    int nextShaderId;
+
+    float projectionMatrix[16];
+    void createProjectionMatrix(int width, int height);
+
     SDL_Renderer* renderer;
     std::unordered_map<int, std::shared_ptr<Texture>> textures;
     int nextTextureId;

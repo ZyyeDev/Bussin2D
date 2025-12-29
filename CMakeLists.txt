@@ -22,6 +22,7 @@ file(GLOB_RECURSE SOURCES
     "src/*.cpp"
     "src/core/*.cpp"
     "src/modules/*/*.cpp"
+    "src/modules/*/*.c"
     "bindings/*.cpp"
 )
 

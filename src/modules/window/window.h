@@ -3,9 +3,11 @@
 #include <SDL2/SDL.h>
 #include <string>
 
+#include "../graphics/glad.h"
+
 class Window{
 public:
-    Window(),
+    Window();
     ~Window();
 
     bool init(int width, int height, const std::string& title);
@@ -14,9 +16,14 @@ public:
     void pollEvents();
     void quit() {isRunning = false;}
 
-    SDL_Renderer* getRenderer() { return renderer; }
+    int getWidth() { return width; }
+    int getHeight() { return height; }
+
+    SDL_GLContext getGLContext() { return glContext; }
+
     bool isRunning;
 private:
+    SDL_GLContext glContext;
     SDL_Window* window;
-    SDL_Renderer* renderer;
+    int width, height;
 };
