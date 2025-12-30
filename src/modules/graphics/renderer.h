@@ -8,6 +8,7 @@
 #include "shader.h"
 //#include "glad.h"
 #include "texture.h"
+#include "font.h"
 
 class Renderer{
 public:
@@ -69,6 +70,9 @@ public:
     void setShaderVec3(int shaderId, const char* name, float x, float y, float z);
     void setShaderVec4(int shaderId, const char* name, float x, float y, float z, float w);
     void setShaderInt(int shaderId, const char* name, int value);
+
+    int loadFont(const std::string& path, int size);
+    void drawText(int fontId, const std::string& text, int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 private:
     GLuint VAO, VBO;
     GLuint textureVAO, textureVBO;
@@ -85,4 +89,8 @@ private:
     SDL_Renderer* renderer;
     std::unordered_map<int, std::shared_ptr<Texture>> textures;
     int nextTextureId;
+    
+    std::unordered_map<int, std::shared_ptr<Font>> fonts;
+    int nextFontId = 1;
+    std::shared_ptr<Shader> textShader;
 };

@@ -378,3 +378,37 @@ void Renderer::setShaderInt(int shaderId, const char* name, int value) {
         it->second->setInt(name, value);
     }
 }
+
+int Renderer::loadFont(const std::string& path, int size){
+    auto font = std::make_shared<Font>();
+    if (!font->loadFromFile(path, size)){
+        std::cerr << "Failed to load font " << path << std::endl;
+        return -1;
+    }
+
+    int id = nextFontId++;
+    fonts[id] = font;
+    return id;
+}
+
+void Renderer::drawText(int fontId, const std::string& text, int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a){
+    auto it = fonts.find(fontId);
+    if (it == fonts.end()) return;
+
+    auto font = it->second;
+    float currentX = x;
+    for (char c : text){
+        Character* ch = font->getCharacter(c);
+        if (!ch) continue;
+
+        float xpos = currentX + ch->bearingX;
+        float ypos = y - (ch->height - ch->bearingY);
+
+        float w = ch->width;
+        float h = ch->height;
+        
+        drawTexture(ch->textureID, xpos, ypos, h, w);
+
+        currentX += ch->advance;
+    }
+}
