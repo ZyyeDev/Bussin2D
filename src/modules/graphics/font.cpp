@@ -1,0 +1,83 @@
+#include "font.h"
+#include "fstream"
+#include "vector"
+#include "iostream"
+
+Font::Font() : fontSize(0) {};
+
+Font::~Font(){
+    for (auto& pair : characters){
+        glDeleteTextures(1, &pair.second.textureID);
+    }
+}
+
+bool Font::loadFromFile(const std::string& path, int size){
+    fontSize = size;
+
+    std::ifstream file(path, std::ios::binary | std::ios::ate);
+    if (!file.is_open()){
+        std::cerr << "Failed to load font " << path << std::endl;
+        return false;
+    }
+
+    // load font file
+    size_t fileSize = file.tellg();
+    file.seekg(0);
+    std::vector<unsigned char> buffer(fileSize);
+    file.read((char*)buffer.data(), fileSize);
+    file.close();
+
+    // init truetype
+    stbtt_fontinfo font;
+    if (!stbtt_InitFont(&font, buffer.data(), 0)){
+        std::cerr << "Failed to load font " << path << std::endl;
+        return false;
+    }
+
+    float scale = stbtt_ScaleForPixelHeight(&font, fontSize);
+
+    // load ascii chars
+    for (unsigned char c = 32; c < 128; c++){
+        int width, height, xoff, yoff;
+        unsigned char* bitmap = stbtt_GetCodepointBitmap(&font, 0, scale, c, &width, &height, &xoff, &yoff);
+
+        if (!bitmap) continue;
+
+        // create opengl texture
+        GLuint texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
+        
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        
+        int advance, lsb;
+        stbtt_GetCodepointHMetrics(&font, c, &advance, &lsb);
+
+        Character charact = {
+            texture,
+            width,
+            height,
+            xoff,
+            yoff,
+            (int)(advance * scale)
+        };
+
+        characters[c] = charact;
+        stbtt_FreeBitmap(bitmap, nullptr);
+    }
+
+    return true;
+}
+
+Character* Font::getCharacter(char c){
+    auto it = characters.find(c);
+    if (it != characters.end()){
+        return &it->second;
+    }
+    return nullptr;
+}
