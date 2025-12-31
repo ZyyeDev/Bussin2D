@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "glad.h"
+
 #include "stb_truetype.h"
 
 struct Character {

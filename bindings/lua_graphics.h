@@ -180,6 +180,43 @@ static int lua_graphics_setShaderFloat(lua_State* L) {
     return 0;
 }
 
+// Lua: buss.graphics.loadFont(path, size)
+static int lua_graphics_loadFont(lua_State* L){
+    if (!g_renderer) init_renderer();
+
+    const char* path = luaL_checkstring(L, 1);
+    int size = luaL_checknumber(L, 2);
+
+    if (g_renderer){
+        int id = g_renderer->loadFont(path, size);
+        lua_pushinteger(L, id);
+        return 1;
+    }
+
+    lua_pushinteger(L, -1);
+    return 1;
+}
+
+// Lua: buss.graphics.drawText()
+int lua_graphics_drawText(lua_State* L){
+    if (!g_renderer) init_renderer();
+
+    int fontId = luaL_checkinteger(L, 1);
+    const char* text = luaL_checkstring(L, 2);
+    float x = luaL_checknumber(L, 3);
+    float y = luaL_checknumber(L, 4);
+
+    float r = luaL_checknumber(L, 5);
+    float g = luaL_checknumber(L, 6);
+    float b = luaL_checknumber(L, 7);
+    float a = luaL_checknumber(L, 8);
+
+    if (g_renderer){
+        g_renderer->drawText(fontId, text, x, y, r,g,b,a);
+    }
+    return 0;
+}
+
 void register_graphics_bindings(lua_State* L){
     lua_getglobal(L, "buss");
     if (lua_isnil(L, -1)){
@@ -218,6 +255,12 @@ void register_graphics_bindings(lua_State* L){
 
     lua_pushcfunction(L, lua_graphics_setShaderFloat);
     lua_setfield(L, -2, "setShaderFloat");
+
+    lua_pushcfunction(L, lua_graphics_loadFont);
+    lua_setfield(L, -2, "loadFont");
+
+    lua_pushcfunction(L, lua_graphics_drawText);
+    lua_setfield(L, -2, "drawText");
 
     lua_setfield(L, -2, "graphics");
     lua_setglobal(L, "buss");

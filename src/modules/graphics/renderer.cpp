@@ -40,6 +40,39 @@ Renderer::Renderer(int width, int height){
         }
     )";
 
+    // text stuff
+    textShader = std::make_shared<Shader>();
+    std::string textVertSource = R"(
+        #version 330 core
+        layout(location = 0) in vec2 position;
+        layout(location = 1) in vec2 texCoord;
+        out vec2 fragTexCoord;
+        uniform mat4 projection;
+        void main() {
+            gl_Position = projection * vec4(position, 0.0, 1.0);
+            fragTexCoord = texCoord;
+        }
+    )";
+    std::string textFragSource = R"(
+        #version 330 core
+        in vec2 fragTexCoord;
+        out vec4 outColor;
+        uniform sampler2D textureSampler;
+        uniform vec4 textColor;
+        void main() {
+            vec4 sampled = vec4(1.0, 1.0, 1.0, texture(textureSampler, fragTexCoord).r);
+            outColor = textColor * sampled;
+        }
+    )";
+
+    GLuint textVertShader = textShader->compileShader(textVertSource, GL_VERTEX_SHADER);
+    GLuint textFragShader = textShader->compileShader(textFragSource, GL_FRAGMENT_SHADER);
+
+    textShader->program = glCreateProgram();
+    glAttachShader(textShader->program, textVertShader);
+    glAttachShader(textShader->program, textFragShader);
+    glLinkProgram(textShader->program);
+
     GLuint vertShader = defaultShader->compileShader(vertSource, GL_VERTEX_SHADER);
     GLuint fragShader = defaultShader->compileShader(fragSource, GL_FRAGMENT_SHADER);
 
@@ -58,6 +91,9 @@ Renderer::Renderer(int width, int height){
     glBindVertexArray(textureVAO);
     glBindBuffer(GL_ARRAY_BUFFER, textureVBO);
 
+    // text stuf
+    glDeleteShader(textVertShader);
+    glDeleteShader(textFragShader);
     
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -387,12 +423,28 @@ int Renderer::loadFont(const std::string& path, int size){
     return id;
 }
 
-void Renderer::drawText(int fontId, const std::string& text, int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a){
+void Renderer::drawText(int fontId, const std::string& text, float x, float y, unsigned char r, unsigned char g, unsigned char b, unsigned char a){
     auto it = fonts.find(fontId);
     if (it == fonts.end()) return;
 
     auto font = it->second;
+
+    float fr = r/255.0f;
+    float fg = g/255.0f;
+    float fb = b/255.0f;
+    float fa = a/255.0f;
+
+    textShader->use();
+    textShader->setMat4("projection", projectionMatrix);
+    textShader->setVec4("textColor", fr, fg, fb, fa);
+    textShader->setInt("textureSampler", 0);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindVertexArray(textureVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, textureVAO);
+
     float currentX = x;
+
     for (char c : text){
         Character* ch = font->getCharacter(c);
         if (!ch) continue;
@@ -402,8 +454,21 @@ void Renderer::drawText(int fontId, const std::string& text, int x, int y, unsig
 
         float w = ch->width;
         float h = ch->height;
+
+        float vertices[] = {
+            xpos,     ypos,     0.0f, 0.0f,  // top left
+            xpos + w, ypos,     1.0f, 0.0f,  // top right
+            xpos + w, ypos + h, 1.0f, 1.0f,  // bottom right
+            
+            xpos,     ypos,     0.0f, 0.0f,  // top left
+            xpos + w, ypos + h, 1.0f, 1.0f,  // bottom right
+            xpos,     ypos + h, 0.0f, 1.0f,  // bottom left
+        };
         
-        drawTexture(ch->textureID, xpos, ypos, h, w);
+        glBindTexture(GL_TEXTURE_2D, ch->textureID);
+        
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
 
         currentX += ch->advance;
     }

@@ -70,7 +70,7 @@ public:
     void setShaderInt(int shaderId, const char* name, int value);
 
     int loadFont(const std::string& path, int size);
-    void drawText(int fontId, const std::string& text, int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+    void drawText(int fontId, const std::string& text, float x, float y, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 private:
     GLuint VAO, VBO;
     GLuint textureVAO, textureVBO;

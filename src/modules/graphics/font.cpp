@@ -1,7 +1,11 @@
 #include "font.h"
-#include "fstream"
-#include "vector"
-#include "iostream"
+
+#include <fstream>
+#include <vector>
+#include <iostream>
+
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "stb_truetype.h"
 
 Font::Font() : fontSize(0) {};
 
@@ -45,15 +49,23 @@ bool Font::loadFromFile(const std::string& path, int size){
 
         // create opengl texture
         GLuint texture;
-        glGenTextures(1, &texture);
-        glBindTexture(GL_TEXTURE_2D, texture);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
-        
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        if (bitmap && width > 0 && height > 0) {
+            glGenTextures(1, &texture);
+            glBindTexture(GL_TEXTURE_2D, texture);
+            
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+            
+            glTexImage2D(
+                GL_TEXTURE_2D, 0, GL_RED,
+                width, height, 0,
+                GL_RED, GL_UNSIGNED_BYTE, bitmap
+            );
+            
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        }
         
         int advance, lsb;
         stbtt_GetCodepointHMetrics(&font, c, &advance, &lsb);
