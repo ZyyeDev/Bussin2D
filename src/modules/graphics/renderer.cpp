@@ -263,10 +263,6 @@ int Renderer::loadTexture(const std::string& path){
     return id;
 }
 
-void Renderer::drawText(std::string Text, int x, int y, int h, int w){
-    
-}
-
 void Renderer::drawTexture(int textureId, int x, int y, int h, int w){
     auto it = textures.find(textureId);
     if (it == textures.end()){

@@ -57,8 +57,6 @@ public:
         unsigned char a = 255
     );
 
-    void drawText(std::string Text, int x, int y, int h, int w);
-
     int loadTexture(const std::string& path);
     void drawTexture(int textureId, int x, int y, int h = -1, int w = -1);
     void setTransparency(int textureId, Uint8 transparency);
