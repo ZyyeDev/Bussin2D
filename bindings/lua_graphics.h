@@ -7,12 +7,6 @@
 
 #include <lua.hpp>
 
-void init_renderer(){
-    if (g_window && !g_renderer){
-        g_renderer = new Renderer(g_window->getWidth(), g_window->getHeight());
-    }
-}
-
 // Lua: buss.graphics.drawRect(x, y, w, h, r, g, b, a)
 static int lua_graphics_drawRect(lua_State* L){
     if (!g_renderer) init_renderer();

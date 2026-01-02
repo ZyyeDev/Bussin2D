@@ -1,6 +1,8 @@
 #include "window.h"
 #include "core/common.h"
 
+#include "variables.h"
+
 Window::Window() {
     window = nullptr;
     isRunning = false;
@@ -69,6 +71,10 @@ void Window::clear(unsigned char r, unsigned char g, unsigned char b){
 
 void Window::present(){
     SDL_GL_SwapWindow(window);
+    if (!g_renderer) init_renderer();
+    if (g_renderer){
+        g_renderer->createProjectionMatrix(width, height);
+    }
 }
 
 void Window::pollEvents(){

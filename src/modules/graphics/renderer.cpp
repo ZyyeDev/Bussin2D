@@ -2,6 +2,8 @@
 #include "core/common.h"
 #include <cmath>
 
+#include "variables.h"
+
 Renderer::Renderer(int width, int height){
     nextTextureId = 1;
     
@@ -140,7 +142,6 @@ Renderer::Renderer(int width, int height){
     glDeleteShader(texFragShader);
 
     currentShader = defaultShader;
-    createProjectionMatrix(width, height);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -155,12 +156,20 @@ Renderer::~Renderer(){
 }
 
 void Renderer::createProjectionMatrix(int width, int height) {
-    float left = 0.0f;
-    float right = (float)width;
-    float bottom = (float)height;
-    float top = 0.0f;
+    if (!g_camera) init_camera();
+
+    // HACK: after adding camera the engine kept crashing, this fixes it
+    if (!g_camera || !g_window){
+        return;
+    }
+    float left = g_camera->getX();
+    float right = g_camera->getX() + (float)width / g_camera->getZoom();
+    float bottom = g_camera->getY() + (float)height / g_camera->getZoom();
+    float top = g_camera->getY();
     float near = -1.0f;
     float far = 1.0f;
+    
+    //std::cout << left << " " << right << std::endl;
     
     projectionMatrix[0] = 2.0f / (right - left);
     projectionMatrix[1] = 0.0f;
@@ -441,7 +450,7 @@ void Renderer::drawText(int fontId, const std::string& text, float x, float y, u
 
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(textureVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, textureVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, textureVBO);
 
     float currentX = x;
 

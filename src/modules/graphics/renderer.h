@@ -68,6 +68,8 @@ public:
     void setShaderVec3(int shaderId, const char* name, float x, float y, float z);
     void setShaderVec4(int shaderId, const char* name, float x, float y, float z, float w);
     void setShaderInt(int shaderId, const char* name, int value);
+    
+    void createProjectionMatrix(int width, int height);
 
     int loadFont(const std::string& path, int size);
     void drawText(int fontId, const std::string& text, float x, float y, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
@@ -82,7 +84,6 @@ private:
     int nextShaderId;
 
     float projectionMatrix[16];
-    void createProjectionMatrix(int width, int height);
 
     SDL_Renderer* renderer;
     std::unordered_map<int, std::shared_ptr<Texture>> textures;
