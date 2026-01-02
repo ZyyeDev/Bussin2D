@@ -22,3 +22,4 @@ void register_graphics_bindings(lua_State* L);
 void register_audio_bindings(lua_State* L);
 void register_keyboard_bindings(lua_State* L);
 void register_mouse_bindings(lua_State* L);
+void register_collision_bindings(lua_State* L);
