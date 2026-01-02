@@ -20,9 +20,12 @@ find_library(LUAJIT_LIBRARY
 # Collect all source files
 file(GLOB_RECURSE SOURCES 
     "src/*.cpp"
+    "src/*.h"
     "src/core/*.cpp"
+    "src/core/*.h"
     "src/modules/*/*.cpp"
     "src/modules/*/*.c"
+    "src/modules/*/*.h"
     "bindings/*.cpp"
 )
 
