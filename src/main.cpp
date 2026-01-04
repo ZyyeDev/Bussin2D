@@ -11,6 +11,10 @@
 
 #include "core/build/build.h"
 
+#ifdef _WIN32
+    #include <windows.h>
+#endif
+
 const double PHYSICS_DT = 1.0 / 60.0;
 
 double getCurrentTime(){
@@ -76,6 +80,17 @@ void pullEventsWithInput(){
 }
 
 int main(int argc, char* argv[]){
+    #ifdef _WIN32
+        // ansi shit 
+        HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+        DWORD dwMode = 0;
+
+        if (hOut != INVALID_HANDLE_VALUE)
+            if (GetConsoleMode(hOut, &dwMode))
+                dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+                SetConsoleMode(hOut, dwMode);
+    #endif
+
     if (argc > 1 && std::string(argv[1]) == "build"){
         std::string platform;
         if (argc > 2){
