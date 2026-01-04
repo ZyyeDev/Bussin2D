@@ -1,9 +1,15 @@
 #include <iostream>
 #include <lua.hpp>
 #include <chrono>
+#include <string>
+#include <filesystem>
+
 #include "variables.h"
 #include "bindings.h"
+#include "modules/vfs/vfs.h"
 #include "core/common.h"
+
+#include "core/build/build.h"
 
 const double PHYSICS_DT = 1.0 / 60.0;
 
@@ -70,13 +76,41 @@ void pullEventsWithInput(){
 }
 
 int main(int argc, char* argv[]){
+    if (argc > 1 && std::string(argv[1]) == "build"){
+        std::string platform;
+        if (argc > 2){
+            platform = argv[2];
+        }else{
+            std::cerr << "Please specify build target";
+            return 1;
+        }
+        return buildProject(platform);
+    }
+
+    bool debug = argc > 1 && std::string(argv[1]) == "debug";
+
     std::cout << "we bussin" << std::endl;
+    std::cout << "RUNNING ON VERSION " << ENGINE_VERSION << " WITH DEBUG: " << debug << std::endl;
+
+    VFS::get().init(!debug);
 
     lua_State* L = luaL_newstate();
     luaL_openlibs(L);
-
+    install_vfs_loader(L);
     register_all_bindings(L);
-    int result = luaL_dofile(L, "lua/main.lua");
+
+    std::string code = VFS::get().readText("main.lua");
+    if (code.empty()){
+        std::cerr << "main.lua is empty!!" << std::endl;
+        return 1;
+    }
+
+    if (luaL_loadbuffer(L, code.c_str(), code.size(), "main.lua") != LUA_OK || lua_pcall(L, 0,0,0) != LUA_OK){
+        std::cerr << "Error: " << lua_tostring(L, -1) << std::endl;
+        return 1;
+    }
+
+    /*int result = luaL_dofile(L, "lua/main.lua");
     std::cout << "lua executed" << std::endl;
     if (result != LUA_OK){
         const char* error = lua_tostring(L, -1);
@@ -84,7 +118,7 @@ int main(int argc, char* argv[]){
         lua_pop(L, 1);
         lua_close(L);
         return 1;
-    }
+    }*/
 
     callLuaCallback(L, "ready");
 
