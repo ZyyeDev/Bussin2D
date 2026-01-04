@@ -13,6 +13,25 @@
 
 #ifdef _WIN32
     #include <windows.h>
+
+    void showConsole(){
+        if (AttachConsole(ATTACH_PARENT_PROCESS)){
+            FILE* fpStdout = nullptr;
+            freopen_s(&fpStdout, "CONOUT$", "w", stdout);
+            
+            FILE* fpStderr = nullptr;
+            freopen_s(&fpStderr, "CONOUT$", "w", stderr);
+            
+            FILE* fpStdin = nullptr;
+            freopen_s(&fpStdin, "CONIN$", "r", stdin);
+            
+            std::cout.clear();
+            std::cerr.clear();
+            std::cin.clear();
+
+            std::cout << std::endl;
+        }
+    }
 #endif
 
 const double PHYSICS_DT = 1.0 / 60.0;
@@ -81,6 +100,7 @@ void pullEventsWithInput(){
 
 int main(int argc, char* argv[]){
     #ifdef _WIN32
+        showConsole();
         // ansi shit 
         HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
         DWORD dwMode = 0;
