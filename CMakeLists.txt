@@ -55,6 +55,3 @@ target_include_directories(Bussin2D PRIVATE
 if(WIN32)
     target_link_options(Bussin2D PRIVATE /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup)
 endif()
-
-# Copy Lua files to build directory
-file(COPY ${CMAKE_SOURCE_DIR}/lua DESTINATION ${CMAKE_BINARY_DIR})
