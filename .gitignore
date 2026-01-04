@@ -2,6 +2,7 @@
 build/
 cmake-build-*/
 out/
+!src/core/build/
 
 # Visual Studio
 .vs/
