@@ -40,12 +40,9 @@ static void install_vfs_loader(lua_State* L){
 
     int n = lua_objlen(L, -1);
     lua_pushcfunction(L, vfs_lua_loader);
-    std::cout << "vfs cfunc" << std::endl;
     lua_rawseti(L, -2, n+1);
-    std::cout << "vfs setti" << std::endl;
 
     lua_pop(L, 2);
-    std::cout << "vfs pop" << std::endl;
 }
 
 void register_all_bindings(lua_State* L);

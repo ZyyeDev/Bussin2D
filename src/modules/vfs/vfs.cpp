@@ -42,7 +42,8 @@ struct Footer{
 };
 
 bool VFS::loadPackageData(){
-    std::ifstream exe(getExePath(), std::ios::binary);
+    exePath = getExePath();
+    std::ifstream exe(exePath, std::ios::binary);
     if (!exe.is_open()){
         std::cerr << "exe is not open??" << std::endl;
         return false;
@@ -66,6 +67,9 @@ bool VFS::loadPackageData(){
     exe.read((char*)&count, sizeof(count));
 
     std::cout << "[VFS] Loading " << count << " files" << std::endl;
+
+    uint64_t currentOffset = exe.tellg();
+
     for (uint32_t i = 0; i < count; i++){
         uint32_t len;
         exe.read((char*)&len, sizeof(len));
@@ -76,11 +80,17 @@ bool VFS::loadPackageData(){
         uint32_t size;
         exe.read((char*)&size, sizeof(size));
 
-        std::vector<unsigned char> data(size);
-        exe.read((char*)data.data(), size);
+        FileEntry entry;
+        entry.offset = currentOffset + sizeof(len) + len + sizeof(size);
+        entry.size = size;
+        entry.loaded = false;
 
-        files[name] = data;
+        files[name] = entry;
+
+        exe.seekg(size, std::ios::cur);
+        currentOffset = exe.tellg();
     }
+    exe.close();
     return true;
 }
 
@@ -94,12 +104,8 @@ void VFS::init(bool loadPackage){
 
 std::string VFS::readText(const std::string& path){
     if (packaged){
-        std::cout << "read from packaged thing" << std::endl;
-        auto it = files.find(path);
-        if (it != files.end()){
-            return std::string(it->second.begin(), it->second.end());
-        }
-        return "";
+        auto data = loadFileData(path);
+        return std::string(data.begin(), data.end());
     }
 
     std::ifstream f(path);
@@ -109,11 +115,7 @@ std::string VFS::readText(const std::string& path){
 
 std::vector<unsigned char> VFS::readBinary(const std::string& path){
     if (packaged){
-        auto it = files.find(path);
-        if (it != files.end()){
-            return it->second;
-        }
-        return {};
+        return loadFileData(path);
     }
     std::ifstream f(path, std::ios::binary | std::ios::ate);
     if (!f.is_open()) return {};
@@ -128,4 +130,28 @@ std::vector<unsigned char> VFS::readBinary(const std::string& path){
 bool VFS::exists(const std::string& path){
     if (packaged) return files.find(path) != files.end();
     return fs::exists(path);
+}
+
+std::vector<unsigned char> VFS::loadFileData(const std::string& path){
+    auto it = files.find(path);
+    if (it == files.end()){
+        return {};
+    }
+    FileEntry& entry = it->second;
+    if (entry.loaded){
+        return entry.data;
+    }
+
+    std::ifstream exe(exePath, std::ios::binary);
+    if (!exe.is_open()){
+        std::cerr << "[VFS] Failed to open exe for reading" << std::endl;
+        return {};
+    }
+
+    exe.seekg(entry.offset);
+    entry.data.resize(entry.size);
+    exe.read((char*)entry.data.data(), entry.size);
+    entry.loaded = true;
+
+    return entry.data;
 }
