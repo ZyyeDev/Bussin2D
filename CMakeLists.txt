@@ -53,5 +53,6 @@ target_include_directories(Bussin2D PRIVATE
 )
 
 if(WIN32)
+    target_sources(Bussin2D PRIVATE ${CMAKE_SOURCE_DIR}/assets/engine_icon.rc)
     target_link_options(Bussin2D PRIVATE /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup)
 endif()

@@ -1,0 +1,2 @@
+// engine_icon.rc
+IDI_ICON1 ICON "engine_icon.ico"
