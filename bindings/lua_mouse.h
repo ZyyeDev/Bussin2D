@@ -14,14 +14,14 @@ void init_mouse(){
 static int lua_mouse_getX(lua_State* L){
     init_mouse();
     lua_pushinteger(L, g_mouse->getX());
-    return 0;
+    return 1;
 }
 
 // lua: buss.mouse.getY()
 static int lua_mouse_getY(lua_State* L){
     init_mouse();
     lua_pushinteger(L, g_mouse->getY());
-    return 0;
+    return 1;
 }
 
 // lua: buss.mouse.getPosition()
@@ -29,7 +29,7 @@ static int lua_mouse_getPosition(lua_State* L){
     init_mouse();
     lua_pushinteger(L, g_mouse->getX());
     lua_pushinteger(L, g_mouse->getY());
-    return 0;
+    return 1;
 }
 
 // lua: buss.mouse.isDown(mouse button)
@@ -37,7 +37,7 @@ static int lua_mouse_isDown(lua_State* L){
     init_mouse();
     int button = luaL_checkinteger(L, 1);
     lua_pushboolean(L, g_mouse->isDown(button));
-    return 0;
+    return 1;
 }
 
 // lua: buss.mouse.isPressed(mouse button)
@@ -45,7 +45,7 @@ static int lua_mouse_isPressed(lua_State* L){
     init_mouse();
     int button = luaL_checkinteger(L, 1);
     lua_pushboolean(L, g_mouse->isPressed(button));
-    return 0;
+    return 1;
 }
 
 // lua: buss.mouse.isReleased(mouse button)
@@ -53,14 +53,14 @@ static int lua_mouse_isReleased(lua_State* L){
     init_mouse();
     int button = luaL_checkinteger(L, 1);
     lua_pushboolean(L, g_mouse->isReleased(button));
-    return 0;
+    return 1;
 }
 
 // lua: buss.mouse.isReleased(mouse button)
 static int lua_mouse_getScroll(lua_State* L){
     init_mouse();
     lua_pushnumber(L, g_mouse->getScrollY());
-    return 0;
+    return 1;
 }
 
 void register_mouse_bindings(lua_State* L){
