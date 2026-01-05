@@ -29,7 +29,7 @@ static int lua_mouse_getPosition(lua_State* L){
     init_mouse();
     lua_pushinteger(L, g_mouse->getX());
     lua_pushinteger(L, g_mouse->getY());
-    return 1;
+    return 2;
 }
 
 // lua: buss.mouse.isDown(mouse button)
