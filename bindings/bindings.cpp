@@ -7,6 +7,7 @@
 #include "lua_mouse.h"
 #include "lua_collision.h"
 #include "lua_camera.h"
+#include "lua_plugin.h"
 
 void register_all_bindings(lua_State* L){
     lua_pushcfunction(L, lua_sleep);
@@ -19,4 +20,5 @@ void register_all_bindings(lua_State* L){
     register_mouse_bindings(L);
     register_collision_bindings(L);
     register_camera_bindings(L);
+    register_plugin_bindings(L);
 };
