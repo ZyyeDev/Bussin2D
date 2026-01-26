@@ -82,7 +82,7 @@ void handleEvent(const SDL_Event& event){
 void pullEventsWithInput(){
     if (!g_window) return;
 
-    updateInput();
+    //updateInput();
 
     SDL_Event event;
     while (SDL_PollEvent(&event)){
@@ -95,6 +95,12 @@ void pullEventsWithInput(){
             }
         }
         handleEvent(event);
+    }
+    if (g_mouse) {
+        int mx, my;
+        SDL_GetMouseState(&mx, &my);
+        g_mouse->setX(mx);
+        g_mouse->setY(my);
     }
 }
 
@@ -140,8 +146,17 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
-    if (luaL_loadbuffer(L, code.c_str(), code.size(), "main.lua") != LUA_OK || lua_pcall(L, 0,0,0) != LUA_OK){
-        std::cerr << "Error: " << lua_tostring(L, -1) << std::endl;
+    lua_State* mainThread = lua_newthread(L);
+    lua_setglobal(L, "__main_coroutine");
+
+    if (luaL_loadbuffer(mainThread, code.c_str(), code.size(), "main.lua") != LUA_OK){
+        std::cerr << "Load Error: " << lua_tostring(mainThread, -1) << std::endl;
+        return 1;
+    }
+
+    int mainStatus = lua_resume(mainThread, 0);
+    if (mainStatus != LUA_OK && mainStatus != LUA_YIELD){
+        std::cerr << "Error mainStatus: " << lua_tostring(mainThread, -1) << std::endl;
         return 1;
     }
 
@@ -155,6 +170,7 @@ int main(int argc, char* argv[]){
         return 1;
     }*/
 
+    bool mainScriptFinished = (mainStatus == LUA_OK);
     callLuaCallback(L, "ready");
 
     double lastTime = getCurrentTime();
@@ -162,7 +178,7 @@ int main(int argc, char* argv[]){
 
     // wait for the window before executing physics_step/draw
     // idk if this is the best thing, but why would you want physics_step/draw without a window
-    while (!g_window){
+    while (!g_window && !g_window->isRunning){
         std::cout << "waiting for window" << std::endl;
         sleep(100);
     }
@@ -171,13 +187,23 @@ int main(int argc, char* argv[]){
         double currentTime = getCurrentTime();
         double dt = currentTime-lastTime;
         lastTime = currentTime;
-
         pullEventsWithInput();
+        updateInput();
 
         physicsAccumulator += dt;
         while (physicsAccumulator >= PHYSICS_DT){
             callLuaCallback(L, "physics_step", PHYSICS_DT);
             physicsAccumulator -= PHYSICS_DT;
+            if (!mainScriptFinished && mainStatus == LUA_YIELD){
+                mainStatus = lua_resume(mainThread, 0);
+                if (mainStatus != LUA_OK && mainStatus != LUA_YIELD){
+                    std::cerr << "Main script error: " << lua_tostring(mainThread, -1) << std::endl;
+                    mainScriptFinished = true;
+                } else if (mainStatus == LUA_OK){
+                    mainScriptFinished = true;
+                    std::cout << "Main script finished execution" << std::endl;
+                }
+            }
         }
         g_window->clear(0, 0, 0);
         callLuaCallback(L, "draw");
