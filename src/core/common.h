@@ -16,6 +16,7 @@
 #define PI 3.141592653
 #define DEG_TO_RAD(deg) ((deg) * (PI / 180.0))
 #define RAD_TO_DEG(rad) ((rad) + (180.0 /PI))
+#define LERP(a, b, t) ((a) + (t) * ((b) - (a)))
 #define ENGINE_VERSION "1.0"
 
 namespace Colors{

@@ -48,6 +48,28 @@ static int lua_graphics_drawRectFilled(lua_State* L){
     return 0;
 }
 
+// Lua: buss.graphics.drawTriangle(x1, y1, x2, y2, x3, y3, r, g, b, a)
+static int lua_graphics_drawTriangle(lua_State* L){
+    if (!g_renderer) init_renderer();
+
+    int x1 = luaL_checkinteger(L, 1);
+    int y1 = luaL_checkinteger(L, 2);
+    int x2 = luaL_checkinteger(L, 3);
+    int y2 = luaL_checkinteger(L, 4);
+    int x3 = luaL_checkinteger(L, 5);
+    int y3 = luaL_checkinteger(L, 6);
+    int r = luaL_optinteger(L, 7, 255);
+    int g = luaL_optinteger(L, 8, 255);
+    int b = luaL_optinteger(L, 9, 255);
+    int a = luaL_optinteger(L, 10, 255);
+    
+    if (g_renderer){
+        g_renderer->drawTriangle(x1, y1, x2, y2, x3, y3, r, g, b, a);
+    }
+
+    return 0;
+}
+
 // Lua: buss.graphics.drawCircle(x, y, radius, r, g, b, a)
 static int lua_graphics_drawCircle(lua_State* L){
     if (!g_renderer) init_renderer();
@@ -174,6 +196,68 @@ static int lua_graphics_setShaderFloat(lua_State* L) {
     return 0;
 }
 
+// Lua: buss.graphics.setShaderInt(shaderId, paramName, value)
+static int lua_graphics_setShaderInt(lua_State* L) {
+    if (!g_renderer) init_renderer();
+    
+    int shaderId = luaL_checkinteger(L, 1);
+    const char* name = luaL_checkstring(L, 2);
+    int value = luaL_checkinteger(L, 3);
+    
+    if (g_renderer) {
+        g_renderer->setShaderInt(shaderId, name, value);
+    }
+    return 0;
+}
+
+// Lua: buss.graphics.setShaderVec2(shaderId, paramName, x, y)
+static int lua_graphics_setShaderVec2(lua_State* L) {
+    if (!g_renderer) init_renderer();
+    
+    int shaderId = luaL_checkinteger(L, 1);
+    const char* name = luaL_checkstring(L, 2);
+    float x = luaL_checknumber(L, 3);
+    float y = luaL_checknumber(L, 4);
+    
+    if (g_renderer) {
+        g_renderer->setShaderVec2(shaderId, name, x, y);
+    }
+    return 0;
+}
+
+// Lua: buss.graphics.setShaderVec3(shaderId, paramName, x, y, z)
+static int lua_graphics_setShaderVec3(lua_State* L) {
+    if (!g_renderer) init_renderer();
+    
+    int shaderId = luaL_checkinteger(L, 1);
+    const char* name = luaL_checkstring(L, 2);
+    float x = luaL_checknumber(L, 3);
+    float y = luaL_checknumber(L, 4);
+    float z = luaL_checknumber(L, 5);
+    
+    if (g_renderer) {
+        g_renderer->setShaderVec3(shaderId, name, x, y, z);
+    }
+    return 0;
+}
+
+// Lua: buss.graphics.setShaderVec4(shaderId, paramName, x, y, z, w)
+static int lua_graphics_setShaderVec4(lua_State* L) {
+    if (!g_renderer) init_renderer();
+    
+    int shaderId = luaL_checkinteger(L, 1);
+    const char* name = luaL_checkstring(L, 2);
+    float x = luaL_checknumber(L, 3);
+    float y = luaL_checknumber(L, 4);
+    float z = luaL_checknumber(L, 5);
+    float w = luaL_checknumber(L, 6);
+    
+    if (g_renderer) {
+        g_renderer->setShaderVec4(shaderId, name, x, y, z, w);
+    }
+    return 0;
+}
+
 // Lua: buss.graphics.loadFont(path, size)
 static int lua_graphics_loadFont(lua_State* L){
     if (!g_renderer) init_renderer();
@@ -225,6 +309,9 @@ void register_graphics_bindings(lua_State* L){
 
     lua_pushcfunction(L, lua_graphics_drawRectFilled);
     lua_setfield(L, -2, "drawRectFilled");
+    
+    lua_pushcfunction(L, lua_graphics_drawTriangle);
+    lua_setfield(L, -2, "drawTriangle");
 
     lua_pushcfunction(L, lua_graphics_drawCircle);
     lua_setfield(L, -2, "drawCircle");
@@ -249,6 +336,18 @@ void register_graphics_bindings(lua_State* L){
 
     lua_pushcfunction(L, lua_graphics_setShaderFloat);
     lua_setfield(L, -2, "setShaderFloat");
+
+    lua_pushcfunction(L, lua_graphics_setShaderInt);
+    lua_setfield(L, -2, "setShaderInt");
+
+    lua_pushcfunction(L, lua_graphics_setShaderVec2);
+    lua_setfield(L, -2, "setShaderVec2");
+
+    lua_pushcfunction(L, lua_graphics_setShaderVec3);
+    lua_setfield(L, -2, "setShaderVec3");
+
+    lua_pushcfunction(L, lua_graphics_setShaderVec4);
+    lua_setfield(L, -2, "setShaderVec4");
 
     lua_pushcfunction(L, lua_graphics_loadFont);
     lua_setfield(L, -2, "loadFont");

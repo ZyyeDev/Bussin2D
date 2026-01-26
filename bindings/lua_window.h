@@ -52,6 +52,22 @@ static int lua_window_present(lua_State* L){
     return 0;
 }
 
+// lua: buss.window.getWidth()
+static int lua_window_getWidth(lua_State* L){
+    if (g_window){
+        lua_pushnumber(L, g_window->getWidth());
+    }
+    return 1;
+}
+
+// lua: buss.window.getHeight()
+static int lua_window_getHeight(lua_State* L){
+    if (g_window){
+        lua_pushnumber(L, g_window->getHeight());
+    }
+    return 1;
+}
+
 void register_window_bindings(lua_State* L){
     lua_getglobal(L,"buss");
     if (lua_isnil(L, -1)){
@@ -72,6 +88,12 @@ void register_window_bindings(lua_State* L){
 
     lua_pushcfunction(L, lua_window_present);
     lua_setfield(L, -2, "present");
+
+    lua_pushcfunction(L, lua_window_getWidth);
+    lua_setfield(L, -2, "getWidth");
+
+    lua_pushcfunction(L, lua_window_getHeight);
+    lua_setfield(L, -2, "getHeight");
 
     lua_setfield(L, -2, "window");
     lua_setglobal(L, "buss");

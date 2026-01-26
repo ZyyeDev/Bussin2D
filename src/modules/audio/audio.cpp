@@ -108,6 +108,8 @@ void Audio::resume(int id){
 void Audio::setVolume(int id, float volume){
     auto it = sounds.find(id);
     if (it == sounds.end()) return;
+
+    it->second.volume = volume;
     
     if (it->second.channel != -1){
         int vol = (int)(it->second.volume * masterVolume*MIX_MAX_VOLUME);

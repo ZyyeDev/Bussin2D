@@ -4,6 +4,7 @@
 #include "modules/collision/collision.h"
 #include "variables.h"
 
+// Lua: buss.collision.AABB(x1, y1, w1, h1, x2, y2, w2, h2)
 static int lua_collision_AABB(lua_State* L) {
     int x1 = luaL_checkinteger(L, 1);
     int y1 = luaL_checkinteger(L, 2);
@@ -18,6 +19,7 @@ static int lua_collision_AABB(lua_State* L) {
     return 1;
 }
 
+// Lua: buss.collision.circle(x1, y1, r1, x2, y2, r2)
 static int lua_collision_Circle(lua_State* L) {
     int x1 = luaL_checkinteger(L, 1);
     int y1 = luaL_checkinteger(L, 2);
@@ -30,6 +32,7 @@ static int lua_collision_Circle(lua_State* L) {
     return 1;
 }
 
+// Lua: buss.collision.pointInRect(px, py, rx, ry, rw, rh)
 static int lua_collision_PointInRect(lua_State* L) {
     int px = luaL_checkinteger(L, 1);
     int py = luaL_checkinteger(L, 2);
@@ -39,6 +42,18 @@ static int lua_collision_PointInRect(lua_State* L) {
     int rh = luaL_checkinteger(L, 6);
     
     lua_pushboolean(L, Collision::PointInRect(px, py, rx, ry, rw, rh));
+    return 1;
+}
+
+// Lua: buss.collision.pointInCircle(px, py, cx, cy, r)
+static int lua_collision_PointInCircle(lua_State* L) {
+    int px = luaL_checkinteger(L, 1);
+    int py = luaL_checkinteger(L, 2);
+    int cx = luaL_checkinteger(L, 3);
+    int cy = luaL_checkinteger(L, 4);
+    int r = luaL_checkinteger(L, 5);
+    
+    lua_pushboolean(L, Collision::PointInCircle(px, py, cx, cy, r));
     return 1;
 }
 
@@ -59,6 +74,9 @@ void register_collision_bindings(lua_State* L) {
     
     lua_pushcfunction(L, lua_collision_PointInRect);
     lua_setfield(L, -2, "pointInRect");
+
+    lua_pushcfunction(L, lua_collision_PointInRect);
+    lua_setfield(L, -2, "pointInCircle");
     
     lua_setfield(L, -2, "collision");
     lua_setglobal(L, "buss");
