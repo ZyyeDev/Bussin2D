@@ -275,8 +275,8 @@ static int lua_graphics_loadFont(lua_State* L){
     return 1;
 }
 
-// Lua: buss.graphics.drawText()
-int lua_graphics_drawText(lua_State* L){
+// Lua: buss.graphics.drawText(fontId, text, x, y, r, g, b, a)
+static int lua_graphics_drawText(lua_State* L){
     if (!g_renderer) init_renderer();
 
     int fontId = luaL_checkinteger(L, 1);

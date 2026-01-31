@@ -31,7 +31,8 @@ std::vector<std::string> findFiles(){
     for (auto& entry: fs::recursive_directory_iterator(".")){
         if (entry.is_regular_file()){
             std::string ext = entry.path().extension().string();
-            if (ext == ".lua" || ext == ".png" || ext == ".wav" || ext == ".ttf"){
+            // we should check all formats in an array or smth
+            if (ext == ".lua" || ext == ".png" || ext == ".wav" || ext == ".ttf" || ext == ".dll"  || ext == ".so"  || ext == ".mp3"){
                 files.push_back(entry.path().string());
             }
         }
@@ -51,105 +52,130 @@ int buildProject(const std::string& platform){
         return 1;
     }
 
-    std::string exeName = getCurrentExeName();
-    std::string outPath = "build/game";
+    std::string exeExt = "";
+    std::string templateName = "";
+
     if (platform == "windows"){
-        outPath += ".exe";
+        exeExt += ".exe";
+    }else if (platform == "linux"){
+        // it wont compile to linux, i am too fucking lazy to do this, may do it in the future
+        exeExt += "";
+    }else{
+        std::cerr << "Unknown platform: " << platform << std::endl;
+        return 1;
     }
 
-    fs::path dstDir = fs::absolute("build");
-    fs::create_directories(dstDir);
-    
-    fs::path srcPath = fs::absolute(exeName);
-    fs::path dstPath = fs::absolute(outPath);
+    templateName = "template_" + platform + exeExt;
 
-    std::cout << Colors::CYAN << "Copying exe:" << std::endl;
+    fs::path exeName = getCurrentExeName();
+    fs::path engineDir = fs::path(exeName).parent_path();
+    fs::path templatePath = engineDir / templateName;
+    
+    if (!fs::exists(templatePath)) {
+        std::cerr << "Template not found: " << templatePath << std::endl;
+        return 1;
+    }
+
+    fs::path buildDir = fs::absolute("build");
+    fs::create_directories(buildDir);
+
+    std::string outPath = "build/game" + exeExt;
 
     try{
+        fs::path srcPath = fs::absolute(templatePath);
+        fs::path dstPath = fs::absolute(outPath);
+
         fs::copy_file(srcPath, dstPath, fs::copy_options::overwrite_existing);
+
         auto copiedSize = fs::file_size(dstPath);
         std::cout << Colors::BLUE << " Copied exe size: " << copiedSize << " bytes" << std::endl;
+
+        #ifndef _WIN32
+            chmod(dstPath.c_str(), 0755);
+        #endif
     } catch (std::exception& e){
         std::cerr << Colors::RED << " Copy failed: " << e.what() << std::endl;
         return 1;
     }
 
-    std::cout << Colors::CYAN << "Copying dependencies:" << std::endl;
-
-    try {
-        for (auto& entry : fs::directory_iterator(srcPath.parent_path())) {
-            if (entry.is_regular_file()) {
-                std::string filename = entry.path().filename().string();
-                std::string ext = entry.path().extension().string();
-                
-                if (ext == ".dll" || filename.find(".so") != std::string::npos) {
+    #ifdef _WIN32
+    if (platform == "windows") {
+        std::cout << Colors::CYAN << "Copying dependencies:" << std::endl;
+        
+        try {
+            for (auto& entry : fs::directory_iterator(engineDir)) {
+                if (entry.is_regular_file()) {
+                    std::string filename = entry.path().filename().string();
+                    std::string ext = entry.path().extension().string();
                     
-                    fs::path destFile = dstDir / filename;
-                    fs::copy_file(entry.path(), destFile, fs::copy_options::overwrite_existing);
-                    
-                    std::cout << Colors::BLUE << "  Copied: " << filename << std::endl;
+                    if (ext == ".dll") {
+                        fs::path destFile = buildDir / filename;
+                        fs::copy_file(entry.path(), destFile, fs::copy_options::overwrite_existing);
+                        std::cout << "  Copied: " << filename << std::endl;
+                    }
                 }
             }
+        } catch (std::exception& e) {
+            std::cerr << Colors::YELLOW << "Warning: Failed to copy some dependencies: " << e.what() << std::endl;
         }
-    } catch (std::exception& e) {
-        std::cerr << Colors::YELLOW << "Warning: Failed to copy some dependencies: " << e.what() << std::endl;
     }
+    #endif
 
-    std::ofstream out(dstPath, std::ios::binary | std::ios::app);
+    uint64_t offset = fs::file_size(outPath);
+    
+    std::ofstream out(outPath, std::ios::binary | std::ios::app);
     if (!out.is_open()) {
-        std::cerr << Colors::RED << "Failed to open output file!" << std::endl;
+        std::cerr << Colors::RED << "Failed to open output file for packaging!" << std::endl;
         return 1;
     }
-
-    uint64_t offset = fs::file_size(outPath); //out.tellp();
-    if (offset == 0) {
-        std::cerr << Colors::RED << "ERROR: Offset is 0!" << std::endl;
-        return 1;
-    }
-
+    
     uint32_t count = files.size();
     out.write((char*)&count, sizeof(count));
-
-    for (auto& path : files){
+    
+    std::cout << "Packaging " << count << " files..." << std::endl;
+    
+    for (auto& path : files) {
         std::string p = path;
-        if (p[0] == '.' && (p[1] == '/' || p[1] == '\\')){
+        if (p[0] == '.' && (p[1] == '/' || p[1] == '\\')) {
             p = p.substr(2);
         }
-        //std::replace(p.begin(), p.end(), "\\", "/");
         for (char& c : p) {
-            if (c == '\\') {
-                c = '/';
-            }
+            if (c == '\\') c = '/';
         }
-
+        
         std::ifstream in(path, std::ios::binary | std::ios::ate);
-        if (!in.is_open()) continue;
-
+        if (!in.is_open()) {
+            std::cerr << Colors::YELLOW << "  WARNING: Failed to open: " << path << std::endl;
+            continue;
+        }
+        
         uint32_t size = in.tellg();
         in.seekg(0);
-
+        
         uint32_t len = p.length();
         out.write((char*)&len, sizeof(len));
         out.write(p.c_str(), len);
+        
         out.write((char*)&size, sizeof(size));
-
+        
         std::vector<char> data(size);
         in.read(data.data(), size);
         out.write(data.data(), size);
-
-        std::cout << " " << p << " (" << size << " bytes)" << std::endl;
+        
+        std::cout << "  " << p << " (" << size << " bytes)" << std::endl;
     }
-
+    
     struct Footer {
         uint64_t offset;
         uint64_t size;
-        char magic[8] = "BUSSIN";
+        char magic[8] = "BUSSING";
     };
-
+    
     Footer footer;
     footer.offset = offset;
-    footer.size = static_cast<uint64_t>(out.tellp()) - offset;
+    footer.size = static_cast<uint64_t>(fs::file_size(outPath)) - offset;
     out.write((char*)&footer, sizeof(footer));
+    out.close();
     
     std::cout << Colors::GREEN << "Writing footer: offset=" << footer.offset 
             << ", size=" << footer.size << std::endl;
