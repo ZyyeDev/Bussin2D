@@ -34,7 +34,7 @@
     }
 #endif
 
-const double PHYSICS_DT = 1.0 / 60.0;
+double PHYSICS_DT = 1.0 / 60.0;
 
 double getCurrentTime(){
     auto now = std::chrono::high_resolution_clock::now();
@@ -190,6 +190,10 @@ int main(int argc, char* argv[]){
         pullEventsWithInput();
         updateInput();
 
+        if (g_window != nullptr){
+            PHYSICS_DT = 1.0/g_window->get_physics_framerate();
+        }
+
         physicsAccumulator += dt;
         while (physicsAccumulator >= PHYSICS_DT){
             callLuaCallback(L, "physics_step", PHYSICS_DT);
@@ -205,9 +209,11 @@ int main(int argc, char* argv[]){
                 }
             }
         }
+
         g_window->clear(0, 0, 0);
         callLuaCallback(L, "draw");
         g_window->present();
+        g_window->pollEvents();
     }
 
     std::cout << "ended" << std::endl;

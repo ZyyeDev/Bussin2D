@@ -14,6 +14,7 @@ find_library(LUAJIT_LIBRARY NAMES lua51 luajit luajit-5.1)
 file(GLOB_RECURSE SOURCES 
     "src/*.cpp"
     "src/core/*.cpp"
+    "src/core/*.h"
     "src/modules/*/*.cpp"
     "src/modules/*/*.c"
     "bindings/*.cpp"

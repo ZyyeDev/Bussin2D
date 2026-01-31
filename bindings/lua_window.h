@@ -27,7 +27,6 @@ static int lua_window_isRunning(lua_State* L){
         return 1;
     }
 
-    g_window->pollEvents();
     lua_pushboolean(L,g_window->isRunning);
     return 1;
 }
@@ -68,6 +67,14 @@ static int lua_window_getHeight(lua_State* L){
     return 1;
 }
 
+// lua: buss.window.setPhysicsFramerate(frame_rate)
+static int lua_set_physics_framerate(lua_State* L){
+    if (g_window){
+        g_window->set_physics_framerate(luaL_checkinteger(L, 0));
+    }
+    return 1;
+}
+
 void register_window_bindings(lua_State* L){
     lua_getglobal(L,"buss");
     if (lua_isnil(L, -1)){
@@ -94,6 +101,9 @@ void register_window_bindings(lua_State* L){
 
     lua_pushcfunction(L, lua_window_getHeight);
     lua_setfield(L, -2, "getHeight");
+
+    lua_pushcfunction(L, lua_set_physics_framerate);
+    lua_setfield(L, -2, "setPhysicsFramerate");
 
     lua_setfield(L, -2, "window");
     lua_setglobal(L, "buss");
