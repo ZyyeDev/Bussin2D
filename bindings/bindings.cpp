@@ -9,6 +9,7 @@
 #include "lua_camera.h"
 #include "lua_plugin.h"
 #include "lua_color.h"
+#include "lua_math.h"
 
 void register_all_bindings(lua_State* L){
     lua_pushcfunction(L, lua_sleep);
@@ -23,4 +24,5 @@ void register_all_bindings(lua_State* L){
     register_camera_bindings(L);
     register_plugin_bindings(L);
     register_color_bindings(L);
+    register_math_bindings(L);
 };
