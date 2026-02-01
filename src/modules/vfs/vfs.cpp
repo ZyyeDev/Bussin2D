@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+#include "core/common.h"
 
 #ifdef _WIN32
     #include <windows.h>
@@ -100,6 +101,56 @@ void VFS::init(bool loadPackage){
     }else{
         packaged = false;
     }
+
+    #ifdef _WIN32
+        userPath = std::string(getenv("APPDATA")) + "Bussin2D/";
+    #else
+        userPath = std::string(getenv("HOME")) + "/.local/share/Bussin2D";
+    #endif
+    fs::create_directory(userPath);
+}
+
+std::string VFS::resolvePath(const std::string& path){
+    if (path.substr(0, 6) == "res://"){
+        return path.substr(6);
+    }
+    if (path.substr(0, 7) == "user://"){
+        return userPath +  path.substr(7);
+    }
+    return path;
+}
+
+bool VFS::writeText(const std::string& path, const std::string& content){
+    std::string fullPath = VFS::resolvePath(path);
+    if (path.substr(0, 7) == "user://"){
+        std::cerr << Colors::RED << "Cannot write to read-only files" << std::endl;
+        return false;
+    }
+    std::ofstream f(fullPath);
+    if (!f.is_open()) return false;
+
+    f << content;
+
+    f.close();
+
+    return true;
+}
+
+bool VFS::writeBinary(const std::string& path, const std::vector<unsigned char>& data){
+    std::string fullPath = VFS::resolvePath(path);
+    if (path.substr(0, 7) == "user://"){
+        std::cerr << Colors::RED << "Cannot write to read-only files" << std::endl;
+        return false;
+    }
+
+    std::ofstream f(fullPath, std::ios::binary);
+    if (!f.is_open()) return false;
+    
+    f.write(reinterpret_cast<const char*>(data.data()), data.size());
+    
+    f.close();
+
+    return true;
 }
 
 std::string VFS::readText(const std::string& path){
@@ -155,3 +206,4 @@ std::vector<unsigned char> VFS::loadFileData(const std::string& path){
 
     return entry.data;
 }
+

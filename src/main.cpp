@@ -9,7 +9,9 @@
 #include "modules/vfs/vfs.h"
 #include "core/common.h"
 
-#include "core/build/build.h"
+#ifdef BUSSIN_EDITOR
+    #include "core/build/build.h"
+#endif
 
 #ifdef _WIN32
     #include <windows.h>
@@ -117,20 +119,26 @@ int main(int argc, char* argv[]){
                 SetConsoleMode(hOut, dwMode);
     #endif
 
-    if (argc > 1 && std::string(argv[1]) == "build"){
-        std::string platform;
-        if (argc > 2){
-            platform = argv[2];
-        }else{
-            std::cerr << "Please specify build target";
-            return 1;
+    #ifdef BUSSIN_EDITOR
+        if (argc > 1 && std::string(argv[1]) == "build"){
+            std::string platform;
+            if (argc > 2){
+                platform = argv[2];
+            }else{
+                std::cerr << "Please specify build target";
+                return 1;
+            }
+            return buildProject(platform);
         }
-        return buildProject(platform);
-    }
-
-    bool debug = argc > 1 && std::string(argv[1]) == "debug";
+    
+        bool debug = argc > 1 && std::string(argv[1]) == "debug";
+    #else
+        bool debug = false;
+    #endif
 
     std::cout << "we bussin" << std::endl;
+    
+    std::cout << std::boolalpha;
     std::cout << "RUNNING ON VERSION " << ENGINE_VERSION << " WITH DEBUG: " << debug << std::endl;
 
     VFS::get().init(!debug);

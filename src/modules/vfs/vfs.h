@@ -19,6 +19,11 @@ public:
     void init(bool loadPackage);
     bool isPackaged() const {return packaged;}
 
+    std::string resolvePath(const std::string& path);
+
+    bool writeText(const std::string& path, const std::string& content);
+    bool writeBinary(const std::string& path, const std::vector<unsigned char>& data);
+
     std::string readText(const std::string& path);
     std::vector<unsigned char> readBinary(const std::string& path);
     std::vector<unsigned char> loadFileData(const std::string& path);
@@ -28,6 +33,8 @@ private:
     bool packaged = false;
     std::unordered_map<std::string, FileEntry> files;
     std::string exePath;
+    
+    std::string userPath;
 
     bool loadPackageData();
     std::string getExePath();

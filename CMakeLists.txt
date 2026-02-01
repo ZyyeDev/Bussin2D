@@ -46,6 +46,8 @@ set_target_properties(template_windows PROPERTIES
 # MAIN EXECUTABLE
 add_executable(bussin2d ${SOURCES})
 
+target_compile_definitions(bussin2d PRIVATE BUSSIN_EDITOR)
+
 target_link_libraries(bussin2d PRIVATE
     SDL2::SDL2
     SDL2::SDL2main
