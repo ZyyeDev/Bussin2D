@@ -85,3 +85,12 @@ void Window::pollEvents(){
         }
     }
 }
+
+void Window::setVsync(bool enabled){
+    int interval = 0;
+    if (enabled) interval = 1;
+    if (SDL_GL_SetSwapInterval(interval) < 0){
+        std::cerr << Colors::RED << "Error: Unable to set vsync! Error: " << SDL_GetError() << std::endl;
+        if (interval == -1) SDL_GL_SetSwapInterval(1);
+    }
+}

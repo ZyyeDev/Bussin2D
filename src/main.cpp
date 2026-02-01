@@ -183,12 +183,26 @@ int main(int argc, char* argv[]){
         sleep(100);
     }
 
+    double fpsTimer = 0;
+    int frameCount = 0;
+    int currentFPS = 0;
+
     while (g_window && g_window->isRunning){
         double currentTime = getCurrentTime();
         double dt = currentTime-lastTime;
         lastTime = currentTime;
         pullEventsWithInput();
         updateInput();
+
+        // calculate fps thing
+        frameCount++;
+        fpsTimer += dt;
+        if (fpsTimer >= 1.0) {
+            currentFPS = frameCount;
+            g_window->currentFPS = currentFPS;
+            frameCount = 0;
+            fpsTimer -= 1.0;
+        }
 
         if (g_window != nullptr){
             PHYSICS_DT = 1.0/g_window->get_physics_framerate();
@@ -213,7 +227,17 @@ int main(int argc, char* argv[]){
         g_window->clear(0, 0, 0);
         callLuaCallback(L, "draw");
         g_window->present();
-        g_window->pollEvents();
+
+        if (g_window->getTargetFPS() > 0){
+            double targetFrameTime = 1.0/g_window->getTargetFPS();
+            double frameTime = getCurrentTime() - currentTime;
+            if (frameTime < targetFrameTime){
+                uint32_t delayms = static_cast<uint32_t>((targetFrameTime - frameTime)*1000);
+                if (delayms > 0){
+                    SDL_Delay(delayms);
+                }
+            }
+        }
     }
 
     std::cout << "ended" << std::endl;

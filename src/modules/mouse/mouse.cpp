@@ -15,7 +15,8 @@ void Mouse::update(){
     pressedThisFrame.clear();
     releasedThisFrame.clear();
     scrollY = 0;
-    //buttonState = SDL_GetMouseState(&x, &y);
+    
+    buttonState = SDL_GetMouseState(&x, &y);
 }
 
 void Mouse::handleEvent(const SDL_Event& event){
@@ -55,6 +56,7 @@ int Mouse::getScrollY(){
 void Mouse::setX(int mx){
     x = mx;
 }
+
 void Mouse::setY(int my){
-    x = my;
+    y = my;
 }

@@ -25,9 +25,16 @@ public:
     void set_physics_framerate(int new_physics) { physics_framerate = new_physics; }
 
     bool isRunning;
+
+    int currentFPS;
+    void setVsync(bool enabled);
+
+    void setTargetFPS(int fps) { targetFPS = fps; }
+    int getTargetFPS() { return targetFPS; }
 private:
     SDL_GLContext glContext;
     SDL_Window* window;
     int width, height;
     int physics_framerate = 60.0;
+    int targetFPS = 60;
 };

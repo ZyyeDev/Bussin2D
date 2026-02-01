@@ -20,6 +20,48 @@ static int lua_window_init(lua_State* L){
     return 1;
 }
 
+// lua: buss.window.setVSync(enabled)
+static int lua_window_setVSync(lua_State* L) {
+    bool enabled;
+
+    if (lua_isboolean(L, 1)) {
+        enabled = lua_toboolean(L, 1);
+    } else {
+        enabled = luaL_checkinteger(L, 1) != 0;
+    }
+
+    if (g_window) {
+        g_window->setVsync(enabled);
+    }
+    return 0;
+}
+
+// lua: buss.window.setMaxFPS(fps)
+static int lua_window_setMaxFPS(lua_State* L){
+    int targetFps = luaL_checkinteger(L,1);
+
+    if (g_window){
+        g_window->setTargetFPS(targetFps);
+    }
+    return 0;
+}
+
+// lua: buss.window.getMaxFPS()
+static int lua_window_getMaxFPS(lua_State* L){
+    if (g_window){
+        lua_pushnumber(L, g_window->getTargetFPS());
+    }
+    return 1;
+}
+
+// lua: buss.window.getFps()
+static int lua_window_getFps(lua_State* L){
+    if (g_window){
+        lua_pushnumber(L, g_window->currentFPS);
+    }
+    return 1;
+}
+
 // lua: buss.window.isRunning()
 static int lua_window_isRunning(lua_State* L){
     if (!g_window){
@@ -101,6 +143,18 @@ void register_window_bindings(lua_State* L){
 
     lua_pushcfunction(L, lua_window_getHeight);
     lua_setfield(L, -2, "getHeight");
+    
+    lua_pushcfunction(L, lua_window_setVSync);
+    lua_setfield(L, -2, "setVSync");
+    
+    lua_pushcfunction(L, lua_window_setMaxFPS);
+    lua_setfield(L, -2, "setMaxFPS");
+    
+    lua_pushcfunction(L, lua_window_getMaxFPS);
+    lua_setfield(L, -2, "getMaxFPS");
+    
+    lua_pushcfunction(L, lua_window_getFps);
+    lua_setfield(L, -2, "getFps");
 
     lua_pushcfunction(L, lua_set_physics_framerate);
     lua_setfield(L, -2, "setPhysicsFramerate");
