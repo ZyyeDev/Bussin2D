@@ -39,3 +39,4 @@ struct Rect{
 };
 
 float flerp(float a, float b, float t);
+float point_distance(float x1, float y1, float x2, float y2);
