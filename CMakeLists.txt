@@ -38,10 +38,14 @@ target_include_directories(template_windows PRIVATE
     ${LUAJIT_INCLUDE_DIR}
 )
 
-set_target_properties(template_windows PROPERTIES
-    OUTPUT_NAME "template_windows"
-    SUFFIX ".exe"
-)
+if(WIN32)
+    set_target_properties(template_windows PROPERTIES 
+        OUTPUT_NAME "template_windows"
+        SUFFIX ".exe")
+else()
+    set_target_properties(template_windows PROPERTIES 
+        OUTPUT_NAME "template_linux")
+endif()
 
 # MAIN EXECUTABLE
 add_executable(bussin2d ${SOURCES})

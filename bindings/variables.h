@@ -10,6 +10,7 @@
 #include "modules/keyboard/keyboard.h"
 #include "modules/mouse/mouse.h"
 #include "modules/camera/camera.h"
+#include "modules/vfs/vfs.h"
 
 extern Renderer* g_renderer;
 extern Window* g_window;
@@ -17,8 +18,10 @@ extern Audio* g_audio;
 extern Keyboard* g_keyboard;
 extern Mouse* g_mouse;
 extern Camera* g_camera;
+extern VFS* g_vfs;
 
 void init_camera();
 void init_renderer();
+void init_vfs();
 
 #endif

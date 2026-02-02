@@ -15,6 +15,12 @@
 
 namespace fs = std::filesystem;
 
+struct Footer{
+    uint64_t offset;
+    uint64_t size;
+    char magic[8];
+};
+
 VFS& VFS::get(){
     static VFS instance;
     return instance;
@@ -35,12 +41,19 @@ std::string VFS::getExePath(){
         return std::string(path);
     #endif
 }
+std::string VFS::getWorkingDirectory(){
+    #ifdef _WIN32
+        char path[MAX_PATH];
+        GetModuleFileNameA(NULL, path, MAX_PATH);
+        return fs::path(path).parent_path().string();
+    #else
+        char buffer[PATH_MAX];
+        ssize_t count = readlink("/proc/self/exe", buffer, PATH_MAX);
+        if (count == -1) return ""; 
 
-struct Footer{
-    uint64_t offset;
-    uint64_t size;
-    char magic[8];
-};
+        return fs::path(std::string(buffer, count)).parent_path().string();
+    #endif
+}
 
 bool VFS::loadPackageData(){
     exePath = getExePath();
@@ -103,7 +116,8 @@ void VFS::init(bool loadPackage){
     }
 
     #ifdef _WIN32
-        userPath = std::string(getenv("APPDATA")) + "Bussin2D/";
+        // todo: we should allow to change this
+        userPath = std::string(getenv("APPDATA")) + "/Bussin2D/";
     #else
         userPath = std::string(getenv("HOME")) + "/.local/share/Bussin2D";
     #endif
@@ -113,16 +127,16 @@ void VFS::init(bool loadPackage){
 std::string VFS::resolvePath(const std::string& path){
     if (path.substr(0, 6) == "res://"){
         return path.substr(6);
-    }
-    if (path.substr(0, 7) == "user://"){
+    } else if (path.substr(0, 7) == "user://"){
         return userPath +  path.substr(7);
+    } else{
+        return getWorkingDirectory() + path;
     }
-    return path;
 }
 
 bool VFS::writeText(const std::string& path, const std::string& content){
     std::string fullPath = VFS::resolvePath(path);
-    if (path.substr(0, 7) == "user://"){
+    if (path.substr(0, 7) == "res://"){
         std::cerr << Colors::RED << "Cannot write to read-only files" << std::endl;
         return false;
     }
@@ -138,7 +152,7 @@ bool VFS::writeText(const std::string& path, const std::string& content){
 
 bool VFS::writeBinary(const std::string& path, const std::vector<unsigned char>& data){
     std::string fullPath = VFS::resolvePath(path);
-    if (path.substr(0, 7) == "user://"){
+    if (path.substr(0, 7) == "res://"){
         std::cerr << Colors::RED << "Cannot write to read-only files" << std::endl;
         return false;
     }

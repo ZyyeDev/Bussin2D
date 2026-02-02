@@ -6,6 +6,7 @@ Audio* g_audio = nullptr;
 Keyboard* g_keyboard = nullptr;
 Mouse* g_mouse = nullptr;
 Camera* g_camera = nullptr;
+VFS* g_vfs = nullptr;
 
 void init_camera(){
     if (!g_camera && g_window){
@@ -16,5 +17,11 @@ void init_camera(){
 void init_renderer(){
     if (g_window && !g_renderer){
         g_renderer = new Renderer(g_window->getWidth(), g_window->getHeight());
+    }
+}
+
+void init_vfs(){
+    if (!g_vfs){
+        g_vfs = &VFS::get();
     }
 }

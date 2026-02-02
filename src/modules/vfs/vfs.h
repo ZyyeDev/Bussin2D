@@ -38,4 +38,5 @@ private:
 
     bool loadPackageData();
     std::string getExePath();
+    std::string VFS::getWorkingDirectory();
 };

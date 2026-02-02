@@ -141,14 +141,16 @@ int main(int argc, char* argv[]){
     std::cout << std::boolalpha;
     std::cout << "RUNNING ON VERSION " << ENGINE_VERSION << " WITH DEBUG: " << debug << std::endl;
 
-    VFS::get().init(!debug);
+    init_vfs();
+
+    g_vfs->init(!debug);
 
     lua_State* L = luaL_newstate();
     luaL_openlibs(L);
     install_vfs_loader(L);
     register_all_bindings(L);
 
-    std::string code = VFS::get().readText("main.lua");
+    std::string code = g_vfs->readText("main.lua");
     if (code.empty()){
         std::cerr << "main.lua is empty!!" << std::endl;
         return 1;
