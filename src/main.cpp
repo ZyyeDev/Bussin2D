@@ -236,6 +236,7 @@ int main(int argc, char* argv[]){
 
         g_window->clear(0, 0, 0);
         callLuaCallback(L, "draw");
+        g_renderer->flush();
         g_window->present();
 
         if (g_window->getTargetFPS() > 0){

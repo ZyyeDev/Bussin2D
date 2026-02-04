@@ -4,6 +4,7 @@
 #include <memory>
 #include <unordered_map>
 #include <string>
+#include <vector>
 
 #include "shader.h"
 //#include "glad.h"
@@ -73,6 +74,8 @@ public:
 
     int loadFont(const std::string& path, int size);
     void drawText(int fontId, const std::string& text, float x, float y, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+
+    void flush();
 private:
     GLuint VAO, VBO;
     GLuint textureVAO, textureVBO;
@@ -92,4 +95,6 @@ private:
     std::unordered_map<int, std::shared_ptr<Font>> fonts;
     int nextFontId = 1;
     std::shared_ptr<Shader> textShader;
+    
+    std::vector<float> geometryBatch;
 };

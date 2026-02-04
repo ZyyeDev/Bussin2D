@@ -6,6 +6,8 @@
 
 Renderer::Renderer(int width, int height){
     nextTextureId = 1;
+
+    geometryBatch.reserve(10000);
     
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -148,6 +150,7 @@ Renderer::Renderer(int width, int height){
 };
 
 Renderer::~Renderer(){
+    flush();
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteVertexArrays(1, &textureVAO);
@@ -198,6 +201,17 @@ void Renderer::drawRect(int x, int y, int w, int h, unsigned char r, unsigned ch
     float fb = b / 255.0f;
     float fa = a / 255.0f;
     
+    geometryBatch.insert(geometryBatch.end(), {
+        (float)x, (float)y, fr, fg, fb, fa,
+        (float)(x+w), (float)y, fr, fg, fb, fa,
+        (float)(x+w), (float)(y+h), fr, fg, fb, fa,
+        
+        (float)x, (float)y, fr, fg, fb, fa,
+        (float)(x+w), (float)(y+h), fr, fg, fb, fa,
+        (float)x, (float)(y+h), fr, fg, fb, fa,
+    });
+
+    /*
     float vertices[] = {
         (float)x, (float)y, fr, fg, fb, fa,
         (float)(x+w), (float)y, fr, fg, fb, fa,
@@ -214,7 +228,7 @@ void Renderer::drawRect(int x, int y, int w, int h, unsigned char r, unsigned ch
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawArrays(GL_TRIANGLES, 0, 6);*/
 }
 
 void Renderer::drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
@@ -223,7 +237,13 @@ void Renderer::drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, unsi
     float fb = b / 255.0f;
     float fa = a / 255.0f;
     
-    float vertices[] = {
+    geometryBatch.insert(geometryBatch.end(), {
+        (float)x1, (float)y1, fr, fg, fb, fa,
+        (float)x2, (float)y2, fr, fg, fb, fa,
+        (float)x3, (float)y3, fr, fg, fb, fa,
+    });
+
+    /*float vertices[] = {
         (float)x1, (float)y1, fr, fg, fb, fa,
         (float)x2, (float)y2, fr, fg, fb, fa,
         (float)x3, (float)y3, fr, fg, fb, fa,
@@ -235,7 +255,7 @@ void Renderer::drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, unsi
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawArrays(GL_TRIANGLES, 0, 3);*/
 }
 
 void Renderer::drawCircle(int centerX, int centerY, int radius, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
@@ -245,33 +265,22 @@ void Renderer::drawCircle(int centerX, int centerY, int radius, unsigned char r,
     float fa = a / 255.0f;
     
     const int segments = 32;
-    float vertices[(segments + 2) * 6];
     
-    vertices[0] = centerX;
-    vertices[1] = centerY;
-    vertices[2] = fr;
-    vertices[3] = fg;
-    vertices[4] = fb;
-    vertices[5] = fa;
-    
-    for (int i = 0; i <= segments; i++) {
-        float angle = (i / (float)segments) * 2.0f * M_PI;
-        int idx = (i + 1) * 6;
-        vertices[idx] = centerX + cos(angle) * radius;
-        vertices[idx + 1] = centerY + sin(angle) * radius;
-        vertices[idx + 2] = fr;
-        vertices[idx + 3] = fg;
-        vertices[idx + 4] = fb;
-        vertices[idx + 5] = fa;
+    for (int i = 0; i < segments; i++) {
+        float angle1 = (i / (float)segments) * 2.0f * M_PI;
+        float angle2 = ((i + 1) / (float)segments) * 2.0f * M_PI;
+
+        float x1 = centerX + cos(angle1) * radius;
+        float y1 = centerY + sin(angle1) * radius;
+        float x2 = centerX + cos(angle2) * radius;
+        float y2 = centerY + sin(angle2) * radius;
+
+        geometryBatch.insert(geometryBatch.end(), {
+            (float)centerX, (float)centerY, fr, fg, fb, fa,
+            x1, y1, fr, fg, fb, fa,
+            x2, y2, fr, fg, fb, fa
+        });
     }
-    
-    currentShader->use();
-    currentShader->setMat4("projection", projectionMatrix);
-    
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, segments + 2);
 }
 
 void Renderer::drawLine(int x1, int y1, int x2, int y2, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
@@ -481,4 +490,20 @@ void Renderer::drawText(int fontId, const std::string& text, float x, float y, u
 
         currentX += ch->advance;
     }
+}
+
+void Renderer::flush(){
+    if (geometryBatch.empty()){
+        return;
+    }
+
+    currentShader->use();
+    currentShader->setMat4("projection", projectionMatrix);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, geometryBatch.size()*sizeof(float), geometryBatch.data(), GL_DYNAMIC_DRAW);
+
+    glDrawArrays(GL_TRIANGLES, 0, geometryBatch.size() / 6);
+    geometryBatch.clear();
 }
