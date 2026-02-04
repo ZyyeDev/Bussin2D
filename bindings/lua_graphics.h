@@ -270,7 +270,7 @@ static int lua_graphics_loadFont(lua_State* L){
         lua_pushinteger(L, id);
         return 1;
     }
-
+    
     lua_pushinteger(L, -1);
     return 1;
 }

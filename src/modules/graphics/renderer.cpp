@@ -431,6 +431,7 @@ void Renderer::setShaderInt(int shaderId, const char* name, int value) {
 
 int Renderer::loadFont(const std::string& path, int size){
     auto font = std::make_shared<Font>();
+    std::cout << "loading font from path " << path << std::endl;
     if (!font->loadFromFile(path, size)){
         std::cerr << "Failed to load font " << path << std::endl;
         return -1;
@@ -438,12 +439,16 @@ int Renderer::loadFont(const std::string& path, int size){
 
     int id = nextFontId++;
     fonts[id] = font;
+    std::cout << id << std::endl;
+    std::cout << font << std::endl;
     return id;
 }
 
-void Renderer::drawText(int fontId, const std::string& text, float x, float y, unsigned char r, unsigned char g, unsigned char b, unsigned char a){
+void Renderer::drawText(int fontId, const std::string text, float x, float y, unsigned char r, unsigned char g, unsigned char b, unsigned char a){
     auto it = fonts.find(fontId);
-    if (it == fonts.end()) return;
+    if (it == fonts.end()){
+        return;
+    }
 
     auto font = it->second;
 
@@ -461,12 +466,21 @@ void Renderer::drawText(int fontId, const std::string& text, float x, float y, u
     glBindVertexArray(textureVAO);
     glBindBuffer(GL_ARRAY_BUFFER, textureVBO);
 
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
     float currentX = x;
 
     for (char c : text){
         Character* ch = font->getCharacter(c);
+        if (!ch && c == ' '){
+            // hacky hacky
+            ch = font->getCharacter('O');
+            if (!ch) continue;
+            currentX += ch->advance;
+            continue;
+        }
         if (!ch) continue;
-
+        
         float xpos = currentX + ch->bearingX;
         float ypos = y - (ch->height - ch->bearingY);
 

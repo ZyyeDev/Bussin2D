@@ -73,7 +73,7 @@ public:
     void createProjectionMatrix(int width, int height);
 
     int loadFont(const std::string& path, int size);
-    void drawText(int fontId, const std::string& text, float x, float y, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+    void drawText(int fontId, const std::string text, float x, float y, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 
     void flush();
 private:
@@ -95,6 +95,6 @@ private:
     std::unordered_map<int, std::shared_ptr<Font>> fonts;
     int nextFontId = 1;
     std::shared_ptr<Shader> textShader;
-    
+
     std::vector<float> geometryBatch;
 };
