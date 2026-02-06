@@ -108,7 +108,7 @@ static int lua_graphics_drawLine(lua_State* L) {
     return 0;
 }
 
-// Lua: buss.graphics.loadTexture("path/to/image.png")
+// Lua: buss.graphics.loadTexture(image_path)
 static int lua_graphics_loadTexture(lua_State* L) {
     if (!g_renderer) init_renderer();
     
@@ -121,6 +121,54 @@ static int lua_graphics_loadTexture(lua_State* L) {
     }
     
     lua_pushinteger(L, -1);
+    return 1;
+}
+
+// Lua: buss.graphics.createBMP(width, height, id (optional))
+static int lua_graphics_createBMP(lua_State* L) {
+    if (!g_renderer) init_renderer();
+    
+    int width = luaL_checkinteger(L,1);
+    int height = luaL_checkinteger(L,1);
+    std::string imgID = luaL_optstring(L, 1, "");
+    
+    if (g_renderer) {
+        int id = g_renderer->createBMP(width,height,imgID);
+        lua_pushinteger(L, id);
+        return 1;
+    }
+    
+    lua_pushinteger(L, -1);
+    return 1;
+}
+
+// Lua: buss.graphics.changePixel(id, x, y, r, g, b, a)
+static int lua_graphics_changePixel(lua_State* L) {
+    if (!g_renderer) init_renderer();
+    
+    int id = luaL_checknumber(L, 1);
+    int x = luaL_checknumber(L,2);
+    int y = luaL_checknumber(L,3);
+
+    int r = luaL_checknumber(L,4);
+    int g = luaL_checknumber(L,5);
+    int b = luaL_checknumber(L,6);
+    int a = luaL_checknumber(L,7);
+    std::string imgID = luaL_checkstring(L, 1);
+    
+    if (g_renderer) {
+        RGBA Color;
+        Color.R = r;
+        Color.G = g;
+        Color.B = b;
+        Color.A = a;
+
+        bool changed = g_renderer->editPixelBMP(x, y, Color, id);
+        lua_pushboolean(L, changed);
+        return 1;
+    }
+    
+    lua_pushboolean(L, false);
     return 1;
 }
 
@@ -354,6 +402,12 @@ void register_graphics_bindings(lua_State* L){
 
     lua_pushcfunction(L, lua_graphics_drawText);
     lua_setfield(L, -2, "drawText");
+
+    lua_pushcfunction(L, lua_graphics_createBMP);
+    lua_setfield(L, -2, "createBMP");
+
+    lua_pushcfunction(L, lua_graphics_changePixel);
+    lua_setfield(L, -2, "changePixel");
 
     lua_setfield(L, -2, "graphics");
     lua_setglobal(L, "buss");

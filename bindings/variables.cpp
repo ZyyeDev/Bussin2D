@@ -8,6 +8,8 @@ Mouse* g_mouse = nullptr;
 Camera* g_camera = nullptr;
 VFS* g_vfs = nullptr;
 
+int CURRENT_TICK = 0;
+
 void init_camera(){
     if (!g_camera && g_window){
         g_camera = new Camera(g_window->getWidth(), g_window->getHeight());

@@ -204,6 +204,8 @@ int main(int argc, char* argv[]){
         pullEventsWithInput();
         updateInput();
 
+        CURRENT_TICK++;
+
         // calculate fps thing
         frameCount++;
         fpsTimer += dt;

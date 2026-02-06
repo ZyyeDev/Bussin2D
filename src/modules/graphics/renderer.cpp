@@ -4,6 +4,8 @@
 
 #include "variables.h"
 
+std::unordered_map<std::string, BMPData> BMPCache;
+
 Renderer::Renderer(int width, int height){
     nextTextureId = 1;
 
@@ -306,15 +308,48 @@ void Renderer::drawLine(int x1, int y1, int x2, int y2, unsigned char r, unsigne
 int Renderer::loadTexture(const std::string& path){
     auto texture = std::make_shared<Texture>();
 
-    auto loaded = texture->loadFromFile(path,renderer);
+    auto loaded = texture->loadFromFile(path);
     if (!loaded){
-        std::cerr << "Failed to load texture";
+        std::cerr << "Failed to load texture" << std::endl;
         return -1;
     }
 
     int id = nextTextureId++;
     textures[id] = texture;
     return id;
+}
+
+int Renderer::createBMP(int width, int height, const std::string textureId){
+    auto texture = std::make_shared<Texture>();
+
+    auto ctex = texture->createBMP(width, height, textureId);
+    auto loaded = texture->updateBMPTexture();
+    if (ctex == ""){
+        std::cerr << "Failed to create BMP" << std::endl;
+        return -1;
+    }
+
+    int id = nextTextureId++;
+    textures[id] = texture;
+    return id;
+}
+
+bool Renderer::editPixelBMP(int x, int y, RGBA color, const int textureId){
+    auto it = textures.find(textureId);
+    if (it == textures.end()){
+        return false;
+    }
+    auto texture = it->second;
+
+    if (!texture->changePixel(x, y, color)) {
+        return false;
+    }
+
+    if (!texture->updateBMPTexture()){ 
+        return false; 
+    }
+
+    return true;
 }
 
 void Renderer::drawTexture(int textureId, int x, int y, int h, int w){

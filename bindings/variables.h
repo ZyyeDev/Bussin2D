@@ -20,6 +20,8 @@ extern Mouse* g_mouse;
 extern Camera* g_camera;
 extern VFS* g_vfs;
 
+extern int CURRENT_TICK;
+
 void init_camera();
 void init_renderer();
 void init_vfs();

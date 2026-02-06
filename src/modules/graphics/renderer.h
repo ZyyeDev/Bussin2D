@@ -11,6 +11,17 @@
 #include "texture.h"
 #include "font.h"
 
+struct BMPData {
+    int width, height;
+
+    Texture* textureID;
+    bool dirty = true;
+
+    std::vector<RGBA> pixelData;
+};
+
+extern std::unordered_map<std::string, BMPData> BMPCache;
+
 class Renderer{
 public:
     Renderer(int width, int height);
@@ -74,6 +85,12 @@ public:
 
     int loadFont(const std::string& path, int size);
     void drawText(int fontId, const std::string text, float x, float y, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+
+    GLuint getBMPTexture(const std::string& imgID);
+    int createBMP(int width, int height, const std::string textureId);
+    bool editPixelBMP(int x, int y, RGBA color, const int textureId);
+
+    int getNextTextureId() { return nextTextureId; }
 
     void flush();
 private:
