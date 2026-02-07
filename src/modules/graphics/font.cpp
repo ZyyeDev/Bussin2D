@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <iostream>
+#include "modules/vfs/vfs.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
@@ -18,19 +19,8 @@ Font::~Font(){
 bool Font::loadFromFile(const std::string& path, int size){
     fontSize = size;
 
-    std::ifstream file(path, std::ios::binary | std::ios::ate);
-    if (!file.is_open()){
-        std::cerr << "Failed to load font " << path << std::endl;
-        return false;
-    }
-
-    // load font file
-    size_t fileSize = file.tellg();
-    file.seekg(0);
-    std::vector<unsigned char> buffer(fileSize);
-    file.read((char*)buffer.data(), fileSize);
-    file.close();
-
+    auto buffer = VFS::get().readBinary(path);
+    
     // init truetype
     stbtt_fontinfo font;
     if (!stbtt_InitFont(&font, buffer.data(), 0)){

@@ -168,7 +168,7 @@ int buildProject(const std::string& platform){
     struct Footer {
         uint64_t offset;
         uint64_t size;
-        char magic[8] = "BUSSING";
+        char magic[7] = "BUSSIN";
     };
     
     Footer footer;

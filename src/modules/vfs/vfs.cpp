@@ -130,7 +130,7 @@ std::string VFS::resolvePath(const std::string& path){
     } else if (path.substr(0, 7) == "user://"){
         return userPath +  path.substr(7);
     } else{
-        return getWorkingDirectory() + path;
+        return path;
     }
 }
 
@@ -168,8 +168,9 @@ bool VFS::writeBinary(const std::string& path, const std::vector<unsigned char>&
 }
 
 std::string VFS::readText(const std::string& path){
+    std::string resolved = resolvePath(path);
     if (packaged){
-        auto data = loadFileData(path);
+        auto data = loadFileData(resolved);
         return std::string(data.begin(), data.end());
     }
 
@@ -179,10 +180,12 @@ std::string VFS::readText(const std::string& path){
 }
 
 std::vector<unsigned char> VFS::readBinary(const std::string& path){
+    auto resolved = resolvePath(path);
     if (packaged){
-        return loadFileData(path);
+        return loadFileData(resolved);
     }
-    std::ifstream f(path, std::ios::binary | std::ios::ate);
+    std::cout << resolved << std::endl;
+    std::ifstream f(resolved, std::ios::binary | std::ios::ate);
     if (!f.is_open()) return {};
 
     size_t size = f.tellg();

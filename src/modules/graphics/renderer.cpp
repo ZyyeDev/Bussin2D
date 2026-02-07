@@ -429,7 +429,7 @@ void Renderer::setShaderInt(int shaderId, const char* name, int value) {
 
 int Renderer::loadFont(const std::string& path, int size){
     auto font = std::make_shared<Font>();
-    std::cout << "loading font from path " << path << std::endl;
+    
     if (!font->loadFromFile(path, size)){
         std::cerr << "Failed to load font " << path << std::endl;
         return -1;
