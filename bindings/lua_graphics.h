@@ -129,8 +129,8 @@ static int lua_graphics_createBMP(lua_State* L) {
     if (!g_renderer) init_renderer();
     
     int width = luaL_checkinteger(L,1);
-    int height = luaL_checkinteger(L,1);
-    std::string imgID = luaL_optstring(L, 1, "");
+    int height = luaL_checkinteger(L,2);
+    std::string imgID = luaL_optstring(L, 3, "");
     
     if (g_renderer) {
         int id = g_renderer->createBMP(width,height,imgID);
@@ -146,14 +146,14 @@ static int lua_graphics_createBMP(lua_State* L) {
 static int lua_graphics_changePixel(lua_State* L) {
     if (!g_renderer) init_renderer();
     
-    int id = luaL_checknumber(L, 1);
-    int x = luaL_checknumber(L,2);
-    int y = luaL_checknumber(L,3);
+    int id = luaL_checkinteger(L, 1);
+    int x = luaL_checkinteger(L,2);
+    int y = luaL_checkinteger(L,3);
 
-    int r = luaL_checknumber(L,4);
-    int g = luaL_checknumber(L,5);
-    int b = luaL_checknumber(L,6);
-    int a = luaL_checknumber(L,7);
+    int r = luaL_checkinteger(L,4);
+    int g = luaL_checkinteger(L,5);
+    int b = luaL_checkinteger(L,6);
+    int a = luaL_checkinteger(L,7);
     std::string imgID = luaL_checkstring(L, 1);
     
     if (g_renderer) {

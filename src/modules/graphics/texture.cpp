@@ -49,11 +49,11 @@ bool Texture::loadFromFile(const std::string& path){
     glTexImage2D(
         GL_TEXTURE_2D,
         0,
-        GL_RGBA,
+        GL_BGRA,
         width,
         height,
         0,
-        GL_RGBA,
+        GL_BGRA,
         GL_UNSIGNED_BYTE,
         formattedSurface->pixels
     );
@@ -95,10 +95,10 @@ std::string Texture::createBMP(int BMPwidth, int BMPheight, std::string imgID){
     for (int y = 0; y < BMPheight; y++){
         for (int x = 0; x < BMPwidth; x++){
             RGBA color;
-            color.R = 255;
-            color.G = 255;
-            color.B = 255;
-            color.A = 255;
+            color.R = 0;
+            color.G = 0;
+            color.B = 0;
+            color.A = 0;
             data.pixelData[y*BMPwidth + x] = color;
         }
     }
@@ -121,11 +121,11 @@ std::string Texture::createBMP(int BMPwidth, int BMPheight, std::string imgID){
         glTexImage2D(
             GL_TEXTURE_2D,
             0,
-            GL_RGBA,
+            GL_BGRA,
             BMPwidth,
             height,
             0,
-            GL_RGBA,
+            GL_BGRA,
             GL_UNSIGNED_BYTE,
             data.pixelData.data()
         );
@@ -179,11 +179,11 @@ bool Texture::updateBMPTexture(){
         glTexImage2D(
             GL_TEXTURE_2D,
             0,
-            GL_RGBA,
+            GL_BGRA,
             bmp.width,
             bmp.height,
             0,
-            GL_RGBA,
+            GL_BGRA,
             GL_UNSIGNED_BYTE,
             bmp.pixelData.data()
         );
