@@ -9,7 +9,7 @@ std::unordered_map<std::string, BMPData> BMPCache;
 Renderer::Renderer(int width, int height){
     nextTextureId = 1;
 
-    geometryBatch.reserve(10000);
+    drawcallBatch.reserve(10000);
     
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -203,7 +203,8 @@ void Renderer::drawRect(int x, int y, int w, int h, unsigned char r, unsigned ch
     float fb = b / 255.0f;
     float fa = a / 255.0f;
     
-    geometryBatch.insert(geometryBatch.end(), {
+    addToBatch(
+    {
         (float)x, (float)y, fr, fg, fb, fa,
         (float)(x+w), (float)y, fr, fg, fb, fa,
         (float)(x+w), (float)(y+h), fr, fg, fb, fa,
@@ -211,26 +212,7 @@ void Renderer::drawRect(int x, int y, int w, int h, unsigned char r, unsigned ch
         (float)x, (float)y, fr, fg, fb, fa,
         (float)(x+w), (float)(y+h), fr, fg, fb, fa,
         (float)x, (float)(y+h), fr, fg, fb, fa,
-    });
-
-    /*
-    float vertices[] = {
-        (float)x, (float)y, fr, fg, fb, fa,
-        (float)(x+w), (float)y, fr, fg, fb, fa,
-        (float)(x+w), (float)(y+h), fr, fg, fb, fa,
-        
-        (float)x, (float)y, fr, fg, fb, fa,
-        (float)(x+w), (float)(y+h), fr, fg, fb, fa,
-        (float)x, (float)(y+h), fr, fg, fb, fa,
-    };
-    
-    currentShader->use();
-    currentShader->setMat4("projection", projectionMatrix);
-    
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-    glDrawArrays(GL_TRIANGLES, 0, 6);*/
+    }, GL_TRIANGLES);
 }
 
 void Renderer::drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
@@ -239,25 +221,12 @@ void Renderer::drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, unsi
     float fb = b / 255.0f;
     float fa = a / 255.0f;
     
-    geometryBatch.insert(geometryBatch.end(), {
+    addToBatch(
+    {
         (float)x1, (float)y1, fr, fg, fb, fa,
         (float)x2, (float)y2, fr, fg, fb, fa,
         (float)x3, (float)y3, fr, fg, fb, fa,
-    });
-
-    /*float vertices[] = {
-        (float)x1, (float)y1, fr, fg, fb, fa,
-        (float)x2, (float)y2, fr, fg, fb, fa,
-        (float)x3, (float)y3, fr, fg, fb, fa,
-    };
-    
-    currentShader->use();
-    currentShader->setMat4("projection", projectionMatrix);
-    
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-    glDrawArrays(GL_TRIANGLES, 0, 3);*/
+    }, GL_TRIANGLES);
 }
 
 void Renderer::drawCircle(int centerX, int centerY, int radius, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
@@ -277,11 +246,12 @@ void Renderer::drawCircle(int centerX, int centerY, int radius, unsigned char r,
         float x2 = centerX + cos(angle2) * radius;
         float y2 = centerY + sin(angle2) * radius;
 
-        geometryBatch.insert(geometryBatch.end(), {
+        addToBatch(
+        {
             (float)centerX, (float)centerY, fr, fg, fb, fa,
             x1, y1, fr, fg, fb, fa,
             x2, y2, fr, fg, fb, fa
-        });
+        }, GL_TRIANGLES);
     }
 }
 
@@ -291,18 +261,11 @@ void Renderer::drawLine(int x1, int y1, int x2, int y2, unsigned char r, unsigne
     float fb = b / 255.0f;
     float fa = a / 255.0f;
     
-    float vertices[] = {
+    addToBatch(
+    {
         (float)x1, (float)y1, fr, fg, fb, fa,
         (float)x2, (float)y2, fr, fg, fb, fa,
-    };
-    
-    currentShader->use();
-    currentShader->setMat4("projection", projectionMatrix);
-    
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_DYNAMIC_DRAW);
-    glDrawArrays(GL_LINES, 0, 2);
+    }, GL_LINES);
 }
 
 int Renderer::loadTexture(const std::string& path){
@@ -542,17 +505,33 @@ void Renderer::drawText(int fontId, const std::string text, float x, float y, un
 }
 
 void Renderer::flush(){
-    if (geometryBatch.empty()){
+    if (drawcallBatch.empty()){
         return;
     }
 
-    currentShader->use();
-    currentShader->setMat4("projection", projectionMatrix);
+    for (auto dc : drawcallBatch){
+        auto geometryBatch = dc.batch;
 
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, geometryBatch.size()*sizeof(float), geometryBatch.data(), GL_DYNAMIC_DRAW);
+        currentShader->use();
+        currentShader->setMat4("projection", projectionMatrix);
 
-    glDrawArrays(GL_TRIANGLES, 0, geometryBatch.size() / 6);
-    geometryBatch.clear();
+        glBindVertexArray(VAO);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(
+            GL_ARRAY_BUFFER,
+            geometryBatch.size()*sizeof(float),
+            geometryBatch.data(),
+            GL_DYNAMIC_DRAW
+        );
+
+        glDrawArrays(dc.type, 0, geometryBatch.size() / 6);
+    }
+    drawcallBatch.clear();
+}
+
+void Renderer::addToBatch(std::vector<float> data, int type){
+    drawcallData dcdat;
+    dcdat.batch = data;
+    dcdat.type = type;
+    drawcallBatch.insert(drawcallBatch.end(), dcdat);
 }

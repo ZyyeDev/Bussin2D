@@ -11,6 +11,11 @@
 #include "texture.h"
 #include "font.h"
 
+struct drawcallData{
+    int type = GL_TRIANGLES;
+    std::vector<float> batch;
+};
+
 struct BMPData {
     int width, height;
 
@@ -92,6 +97,8 @@ public:
 
     int getNextTextureId() { return nextTextureId; }
 
+    void addToBatch(std::vector<float> data, int type);
+
     void flush();
 private:
     GLuint VAO, VBO;
@@ -113,5 +120,5 @@ private:
     int nextFontId = 1;
     std::shared_ptr<Shader> textShader;
 
-    std::vector<float> geometryBatch;
+    std::vector<drawcallData> drawcallBatch;
 };
