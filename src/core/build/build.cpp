@@ -32,9 +32,9 @@ std::vector<std::string> findFiles(){
         if (entry.is_regular_file()){
             std::string ext = entry.path().extension().string();
             // we should check all formats in an array or smth
-            if (ext == ".lua" || ext == ".png" || ext == ".wav" || ext == ".ttf" || ext == ".dll"  || ext == ".so"  || ext == ".mp3"){
+            //if (ext == ".lua" || ext == ".png" || ext == ".wav" || ext == ".ttf" || ext == ".dll"  || ext == ".so"  || ext == ".mp3"){
                 files.push_back(entry.path().string());
-            }
+            //}
         }
     }
 

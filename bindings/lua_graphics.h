@@ -244,6 +244,16 @@ static int lua_graphics_setShaderFloat(lua_State* L) {
     return 0;
 }
 
+// Lua: buss.graphics.flush()
+static int lua_graphics_flush(lua_State* L) {
+    if (!g_renderer) init_renderer();
+    
+    if (g_renderer) {
+        g_renderer->flush();
+    }
+    return 0;
+}
+
 // Lua: buss.graphics.setShaderInt(shaderId, paramName, value)
 static int lua_graphics_setShaderInt(lua_State* L) {
     if (!g_renderer) init_renderer();
@@ -402,6 +412,9 @@ void register_graphics_bindings(lua_State* L){
 
     lua_pushcfunction(L, lua_graphics_drawText);
     lua_setfield(L, -2, "drawText");
+
+    lua_pushcfunction(L, lua_graphics_flush);
+    lua_setfield(L, -2, "flush");
 
     lua_pushcfunction(L, lua_graphics_createBMP);
     lua_setfield(L, -2, "createBMP");

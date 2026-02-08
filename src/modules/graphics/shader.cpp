@@ -3,6 +3,8 @@
 #include <sstream>
 #include <iostream>
 
+#include "modules/vfs/vfs.h"
+
 Shader::Shader() : program(0) {}
 
 Shader::~Shader() {
@@ -10,15 +12,7 @@ Shader::~Shader() {
 }
 
 std::string Shader::loadFile(const std::string& path){
-    std::ifstream file(path);
-    if (!file.is_open()){
-        std::cerr << "Failed to open shader: " << path << std::endl;
-        return "";
-    }
-
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    return buffer.str();
+    return VFS::get().readText(path);
 }
 
 GLuint Shader::compileShader(const std::string& source, GLenum type){
@@ -41,11 +35,30 @@ GLuint Shader::compileShader(const std::string& source, GLenum type){
 bool Shader::loadFromFiles(const std::string& vertPath, const std::string& fragPath){
     std::string vertSource = loadFile(vertPath);
     std::string fragSource = loadFile(fragPath);
-
-    if (vertSource.empty() || fragPath.empty()){
+    
+    if (vertSource.empty() && fragPath.empty()){
         return false;
     }
 
+    if (vertSource.empty()){
+        vertSource = R"(
+            #version 330 core
+            layout (location = 0) in vec2 aPos;
+            void main() {
+                gl_Position = vec4(aPos, 0.0, 1.0);
+            }
+        )";
+    }
+    if (fragSource.empty()){
+        fragSource = R"(
+            #version 330 core
+            out vec4 FragColor;
+            void main() {
+                FragColor = vec4(1.0);
+            }
+        )";
+    }
+    
     GLuint vertShader = compileShader(vertSource, GL_VERTEX_SHADER);
     GLuint fragShader = compileShader(fragSource, GL_FRAGMENT_SHADER);
 
