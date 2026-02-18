@@ -10,7 +10,6 @@ void Camera::setPosition(float nx, float ny){
     y = ny;
 }
 
-// tbh i feel this is kinda of unnecessary, you can just do the same thing in lua, but ill keep it cuz its faster
 void Camera::move(float dx, float dy){
     x += dx;
     y += dy;
