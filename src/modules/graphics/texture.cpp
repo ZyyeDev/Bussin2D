@@ -49,11 +49,11 @@ bool Texture::loadFromFile(const std::string& path){
     glTexImage2D(
         GL_TEXTURE_2D,
         0,
-        GL_BGRA,
+        GL_RGBA,
         width,
         height,
         0,
-        GL_BGRA,
+        GL_RGBA,
         GL_UNSIGNED_BYTE,
         formattedSurface->pixels
     );
