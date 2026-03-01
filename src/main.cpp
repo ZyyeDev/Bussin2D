@@ -71,11 +71,6 @@ void callLuaCallback(lua_State* L, const char* name, double dt = -1.0){
     lua_pop(L, 1);
 }
 
-void updateInput(){
-    if (g_keyboard) g_keyboard->update();
-    if (g_mouse) g_mouse->update();
-}
-
 void handleEvent(const SDL_Event& event){
     if (g_keyboard) g_keyboard->handleEvent(event);
     if (g_mouse) g_mouse->handleEvent(event);
@@ -83,8 +78,6 @@ void handleEvent(const SDL_Event& event){
 
 void pullEventsWithInput(){
     if (!g_window) return;
-
-    //updateInput();
 
     SDL_Event event;
     while (SDL_PollEvent(&event)){
@@ -201,8 +194,11 @@ int main(int argc, char* argv[]){
         double currentTime = getCurrentTime();
         double dt = currentTime-lastTime;
         lastTime = currentTime;
+
+        if (g_mouse) g_mouse->update();
+        if (g_keyboard) g_keyboard->update();
+        
         pullEventsWithInput();
-        updateInput();
 
         CURRENT_TICK++;
 

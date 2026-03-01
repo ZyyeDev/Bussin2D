@@ -2,6 +2,7 @@
 #include <map>
 #include <SDL2/SDL_image.h>
 
+#include "modules/vfs/vfs.h"
 #include "renderer.h"
 #include "texture.h"
 #include "core/common.h"
@@ -21,7 +22,22 @@ Texture::~Texture(){
 }
 
 bool Texture::loadFromFile(const std::string& path){
-    SDL_Surface* surface = IMG_Load(path.c_str());
+    SDL_Surface* surface = nullptr;
+
+    VFS vfs = VFS::get();
+
+    if (vfs.isPackaged()){
+        auto data = vfs.readBinary(path);
+        if (data.empty()) return false;
+
+        SDL_RWops* rwops = SDL_RWFromConstMem(data.data(),data.size());
+        if (!rwops) return false;
+
+        surface = IMG_Load_RW(rwops, 1);
+    }else{
+        surface = IMG_Load(vfs.resolvePath(path).c_str());
+    }
+
     if (!surface){
         std::cerr << "Failed to load img: " << path << " " << IMG_GetError() << std::endl;
         return false;
@@ -58,7 +74,7 @@ bool Texture::loadFromFile(const std::string& path){
         formattedSurface->pixels
     );
 
-    SDL_FreeSurface(surface);
+    SDL_FreeSurface(formattedSurface);
     return true;
 }
 
