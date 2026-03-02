@@ -1,5 +1,6 @@
 #include "audio.h"
 #include "core/common.h"
+#include "modules/vfs/vfs.h"
 
 Audio::Audio(){
     nextId = 1;
@@ -27,7 +28,24 @@ bool Audio::init(){
 }
 
 int Audio::load(const std::string& path){
-    Mix_Chunk* chunk = Mix_LoadWAV(path.c_str());
+    Mix_Chunk* chunk;
+
+    VFS vfs = VFS::get();
+
+    if (vfs.isPackaged()){
+        auto data = vfs.readBinary(path);
+
+        if (!data.empty()){
+            SDL_RWops* rwops = SDL_RWFromConstMem(data.data(), data.size());
+
+            if (rwops){
+                chunk = Mix_LoadWAV_RW(rwops, 1);
+            }
+        }
+    }else{
+        chunk = Mix_LoadWAV(vfs.resolvePath(path).c_str());
+    }
+
     if (!chunk){
         std::cerr << "Failed to load sound " << path << " Error: " << Mix_GetError() << std::endl;
         return -1;
