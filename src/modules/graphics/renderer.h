@@ -96,14 +96,15 @@ public:
     bool editPixelBMP(int x, int y, RGBA color, const int textureId);
 
     int getNextTextureId() { return nextTextureId; }
-
-    void addToBatch(std::vector<float> data, int type);
+    
+    void addToBatch(std::vector<float>&& data, int type);
 
     void flush();
 private:
     GLuint VAO, VBO;
     GLuint textureVAO, textureVBO;
 
+    int viewWidth, viewHeight;
     std::shared_ptr<Shader> defaultShader;
     std::shared_ptr<Shader> currentShader;
     std::shared_ptr<Shader> textureShader;
@@ -121,4 +122,5 @@ private:
     std::shared_ptr<Shader> textShader;
 
     std::vector<drawcallData> drawcallBatch;
+    std::vector<float> mergedBuffer;
 };

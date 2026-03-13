@@ -10,6 +10,10 @@ Renderer::Renderer(int width, int height){
     nextTextureId = 1;
 
     drawcallBatch.reserve(10000);
+    mergedBuffer.reserve(65536);
+
+    viewWidth = width;
+    viewHeight = height;
     
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -195,6 +199,9 @@ void Renderer::createProjectionMatrix(int width, int height) {
     projectionMatrix[13] = -(top + bottom) / (top - bottom);
     projectionMatrix[14] = -(far + near) / (far - near);
     projectionMatrix[15] = 1.0f;
+
+    viewWidth = width;
+    viewHeight = height;
 }
 
 void Renderer::drawRect(int x, int y, int w, int h, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
@@ -204,7 +211,7 @@ void Renderer::drawRect(int x, int y, int w, int h, unsigned char r, unsigned ch
     float fa = a / 255.0f;
     
     addToBatch(
-    {
+    std::vector<float>{
         (float)x, (float)y, fr, fg, fb, fa,
         (float)(x+w), (float)y, fr, fg, fb, fa,
         (float)(x+w), (float)(y+h), fr, fg, fb, fa,
@@ -222,7 +229,7 @@ void Renderer::drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, unsi
     float fa = a / 255.0f;
     
     addToBatch(
-    {
+    std::vector<float>{
         (float)x1, (float)y1, fr, fg, fb, fa,
         (float)x2, (float)y2, fr, fg, fb, fa,
         (float)x3, (float)y3, fr, fg, fb, fa,
@@ -247,7 +254,7 @@ void Renderer::drawCircle(int centerX, int centerY, int radius, unsigned char r,
         float y2 = centerY + sin(angle2) * radius;
 
         addToBatch(
-        {
+        std::vector<float>{
             (float)centerX, (float)centerY, fr, fg, fb, fa,
             x1, y1, fr, fg, fb, fa,
             x2, y2, fr, fg, fb, fa
@@ -262,7 +269,7 @@ void Renderer::drawLine(int x1, int y1, int x2, int y2, unsigned char r, unsigne
     float fa = a / 255.0f;
     
     addToBatch(
-    {
+    std::vector<float>{
         (float)x1, (float)y1, fr, fg, fb, fa,
         (float)x2, (float)y2, fr, fg, fb, fa,
     }, GL_LINES);
@@ -340,10 +347,17 @@ void Renderer::drawTexture(int textureId, int x, int y, int h, int w){
         (float)x,  (float)y2, 0.0f, 1.0f,  // bottom left
     };
 
-    textureShader->use();
-    textureShader->setMat4("projection", projectionMatrix);
-    textureShader->setFloat("alpha", texture->getTransparency());
-    textureShader->setInt("textureSampler", 0);
+    auto shaderToUse = (currentShader != defaultShader) ? currentShader : textureShader;
+    shaderToUse->use();
+
+    shaderToUse->setMat4("projection", projectionMatrix);
+    shaderToUse->setFloat("alpha", texture->getTransparency());
+    shaderToUse->setInt("textureSampler", 0);
+
+    shaderToUse->setMat4("u_transform", projectionMatrix);
+    shaderToUse->setInt("u_texture", 0);
+    //shaderToUse->setVec4("u_quad_rect", 0.0f, 0.0f, 1.0f, 1.0f);
+    shaderToUse->setVec2("u_resolution", (float)viewWidth, (float)viewHeight);
 
     glActiveTexture(GL_TEXTURE0);
     texture->bind();
@@ -504,34 +518,38 @@ void Renderer::drawText(int fontId, const std::string text, float x, float y, un
     }
 }
 
-void Renderer::flush(){
-    if (drawcallBatch.empty()){
-        return;
+void Renderer::flush() {
+    if (drawcallBatch.empty()) return;
+
+    currentShader->use();
+    currentShader->setMat4("projection", projectionMatrix);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    int i = 0;
+    while (i < (int)drawcallBatch.size()) {
+        int type = drawcallBatch[i].type;
+        mergedBuffer.clear();
+
+        while (i < (int)drawcallBatch.size() && drawcallBatch[i].type == type) {
+            auto& b = drawcallBatch[i].batch;
+            mergedBuffer.insert(mergedBuffer.end(), b.begin(), b.end());
+            i++;
+        }
+
+        glBufferData(GL_ARRAY_BUFFER,
+            mergedBuffer.size() * sizeof(float),
+            mergedBuffer.data(),
+            GL_DYNAMIC_DRAW);
+        glDrawArrays(type, 0, mergedBuffer.size() / 6);
     }
 
-    for (auto dc : drawcallBatch){
-        auto geometryBatch = dc.batch;
-
-        currentShader->use();
-        currentShader->setMat4("projection", projectionMatrix);
-
-        glBindVertexArray(VAO);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(
-            GL_ARRAY_BUFFER,
-            geometryBatch.size()*sizeof(float),
-            geometryBatch.data(),
-            GL_DYNAMIC_DRAW
-        );
-
-        glDrawArrays(dc.type, 0, geometryBatch.size() / 6);
-    }
     drawcallBatch.clear();
 }
 
-void Renderer::addToBatch(std::vector<float> data, int type){
+void Renderer::addToBatch(std::vector<float>&& data, int type) {
     drawcallData dcdat;
-    dcdat.batch = data;
+    dcdat.batch = std::move(data);
     dcdat.type = type;
-    drawcallBatch.insert(drawcallBatch.end(), dcdat);
+    drawcallBatch.push_back(std::move(dcdat));
 }
