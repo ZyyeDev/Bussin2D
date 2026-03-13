@@ -3,6 +3,7 @@
 #include <chrono>
 #include <string>
 #include <filesystem>
+#include <regex>
 
 #include "variables.h"
 #include "bindings.h"
@@ -146,6 +147,12 @@ int main(int argc, char* argv[]){
     std::string code = g_vfs->readText("main.lua");
     if (code.empty()){
         std::cerr << "main.lua is empty!!" << std::endl;
+        return 1;
+    }
+
+    std::regex pattern(R"(while\s+.*isRunning\s*\()");
+    if (std::regex_search(code, pattern)) {
+        std::cerr << "Load Error: YOU CANNOT USE 'while buss.window.isRunning()'. Use buss.draw and buss.physics_step instead!" << std::endl;
         return 1;
     }
 
