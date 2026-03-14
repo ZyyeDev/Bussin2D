@@ -60,6 +60,7 @@ int Audio::load(const std::string& path){
     
     Sound sound;
     sound.chunk = chunk;
+    sound.originalChunk = chunk;
     sound.channel = -1;
     sound.pitch = 1.0f;
     sound.volume = 1.0f;
@@ -79,6 +80,13 @@ void Audio::unload(int id){
     }
     if (it->second.chunk){
         Mix_FreeChunk(it->second.chunk);
+    }
+    if (it->second.chunk != it->second.originalChunk){
+        SDL_free(it->second.chunk->abuf);
+        SDL_free(it->second.chunk);
+    }
+    if (it->second.originalChunk){
+        Mix_FreeChunk(it->second.originalChunk);
     }
     sounds.erase(it);
 }
@@ -154,6 +162,13 @@ void Audio::setPitch(int id, float pitch){
     if (it == sounds.end()) return;
 
     it->second.pitch = pitch;
+
+    if (it->second.chunk != it->second.originalChunk){
+        SDL_free(it->second.chunk->abuf);
+        SDL_free(it->second.chunk);
+    }
+
+    it->second.chunk = resampleChunk(it->second.originalChunk, pitch);
 }
 
 float Audio::getPitch(int id){
@@ -219,4 +234,37 @@ void Audio::pauseAll(){
 
 void Audio::resumeAll(){
     Mix_Resume(-1);
+}
+
+Mix_Chunk* Audio::resampleChunk(Mix_Chunk* original, float pitch){
+    if (pitch == 1.0f) return original;
+
+    int originalSamples = original->alen / 4;
+    int newSamples = (int)(originalSamples / pitch);
+
+    Uint8* newBuffer = (Uint8*)SDL_malloc(newSamples * 4);
+    Sint16* src = (Sint16*)original->abuf;
+    Sint16* dst = (Sint16*)newBuffer;
+
+    for (int i = 0; i < newSamples; i++){
+        float srcIndex = i * pitch;
+        int index = (int)srcIndex;
+        float frac = srcIndex - index;
+
+        // i hate this so much
+        if (index >= originalSamples - 1){
+            dst[i * 2] = src[(originalSamples - 1) * 2];
+            dst[i * 2 + 1] = src[(originalSamples - 1) * 2 + 1];
+        } else {
+            dst[i * 2] = (Sint16)(src[index * 2] * (1.0f - frac) + src[(index + 1) * 2] * frac);
+            dst[i * 2 + 1] = (Sint16)(src[index * 2 + 1] * (1.0f - frac) + src[(index + 1) * 2 + 1] * frac);
+        }
+    }
+
+    Mix_Chunk* newChunk = (Mix_Chunk*)SDL_malloc(sizeof(Mix_Chunk));
+    newChunk->allocated = 1;
+    newChunk->abuf = newBuffer;
+    newChunk->alen = newSamples * 4;
+    newChunk->volume = original->volume;
+    return newChunk;
 }

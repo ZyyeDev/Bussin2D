@@ -7,6 +7,7 @@
 
 struct Sound{
     Mix_Chunk* chunk;
+    Mix_Chunk* originalChunk;
     int channel;
     float volume;
     float pitch;
@@ -45,6 +46,7 @@ public:
     void resumeAll();
 private:
     std::unordered_map<int, Sound> sounds;
+    Mix_Chunk* resampleChunk(Mix_Chunk* original, float pitch);
     int nextId;
     float masterVolume;
 };
