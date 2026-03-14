@@ -100,6 +100,15 @@ public:
     void addToBatch(std::vector<float>&& data, int type);
 
     void flush();
+
+    void setVirtualResolution(int w, int h);
+    void clearVirtualResolution();
+    bool hasVirtualResolution() const { return virtualResEnabled; }
+    int getVirtualWidth() const { return virtualWidth; }
+    int getVirtualHeight() const { return virtualHeight; }
+
+    void beginVirtualFrame();
+    void endVirtualFrame(int windowW, int windowH);
 private:
     GLuint VAO, VBO;
     GLuint textureVAO, textureVBO;
@@ -123,4 +132,17 @@ private:
 
     std::vector<drawcallData> drawcallBatch;
     std::vector<float> mergedBuffer;
+
+    // Virtual resolution FBO
+    bool virtualResEnabled = false;
+    int virtualWidth = 0;
+    int virtualHeight = 0;
+    GLuint fbo = 0;
+    GLuint fboTexture = 0;
+    GLuint fboRBO = 0;
+    GLuint blitVAO = 0;
+    GLuint blitVBO = 0;
+    std::shared_ptr<Shader> blitShader;
+    void initBlitResources();
+    void destroyFBO();
 };

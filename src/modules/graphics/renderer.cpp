@@ -157,10 +157,22 @@ Renderer::Renderer(int width, int height){
 
 Renderer::~Renderer(){
     flush();
+    destroyFBO();
+
+    if (blitVAO){
+        glDeleteVertexArrays(1, &blitVAO); blitVAO = 0;
+    }
+
+    if (blitVBO){
+        glDeleteBuffers(1, &blitVBO);
+        blitVBO = 0;
+    }
+
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteVertexArrays(1, &textureVAO);
     glDeleteBuffers(1, &textureVBO);
+
     textures.clear();
 }
 
@@ -347,7 +359,13 @@ void Renderer::drawTexture(int textureId, int x, int y, int h, int w){
         (float)x,  (float)y2, 0.0f, 1.0f,  // bottom left
     };
 
-    auto shaderToUse = (currentShader != defaultShader) ? currentShader : textureShader;
+    std::shared_ptr<Shader> shaderToUse;
+    if (currentShader != defaultShader){
+        shaderToUse = currentShader;
+    }else{
+        shaderToUse = textureShader;
+    }
+
     shaderToUse->use();
 
     shaderToUse->setMat4("projection", projectionMatrix);
@@ -552,4 +570,157 @@ void Renderer::addToBatch(std::vector<float>&& data, int type) {
     dcdat.batch = std::move(data);
     dcdat.type = type;
     drawcallBatch.push_back(std::move(dcdat));
+}
+
+void Renderer::initBlitResources(){
+    std::string blitVert = R"(
+        #version 330 core
+        layout(location = 0) in vec2 position;
+        layout(location = 1) in vec2 texCoord;
+        out vec2 fragUV;
+        void main(){
+            gl_Position = vec4(position, 0.0, 1.0);
+            fragUV = texCoord;
+        }
+    )";
+    std::string blitFrag = R"(
+        #version 330 core
+        in vec2 fragUV;
+        out vec4 outColor;
+        uniform sampler2D screenTexture;
+        void main(){
+            outColor = texture(screenTexture, fragUV);
+        }
+    )";
+
+    blitShader = std::make_shared<Shader>();
+    GLuint vs = blitShader->compileShader(blitVert, GL_VERTEX_SHADER);
+    GLuint fs = blitShader->compileShader(blitFrag, GL_FRAGMENT_SHADER);
+    blitShader->program = glCreateProgram();
+    glAttachShader(blitShader->program, vs);
+    glAttachShader(blitShader->program, fs);
+    glLinkProgram(blitShader->program);
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+
+    float quadVerts[] = {
+        -1.0f, -1.0f,  0.0f, 1.0f,
+         1.0f, -1.0f,  1.0f, 1.0f,
+         1.0f,  1.0f,  1.0f, 0.0f,
+        -1.0f, -1.0f,  0.0f, 1.0f,
+         1.0f,  1.0f,  1.0f, 0.0f,
+        -1.0f,  1.0f,  0.0f, 0.0f,
+    };
+
+    glGenVertexArrays(1, &blitVAO);
+    glGenBuffers(1, &blitVBO);
+    glBindVertexArray(blitVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, blitVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVerts), quadVerts, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindVertexArray(0);
+}
+
+void Renderer::destroyFBO(){
+    if (fboTexture){
+        glDeleteTextures(1, &fboTexture);
+        fboTexture = 0;
+    }
+
+    if (fboRBO){
+        glDeleteRenderbuffers(1, &fboRBO);
+        fboRBO = 0;
+    }
+
+    if (fbo){
+        glDeleteFramebuffers(1, &fbo);
+        fbo = 0;
+    }
+}
+
+void Renderer::setVirtualResolution(int w, int h){
+    destroyFBO();
+
+    virtualWidth = w;
+    virtualHeight = h;
+    virtualResEnabled = true;
+
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+    glGenTextures(1, &fboTexture);
+    glBindTexture(GL_TEXTURE_2D, fboTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fboTexture, 0);
+
+    glGenRenderbuffers(1, &fboRBO);
+    glBindRenderbuffer(GL_RENDERBUFFER, fboRBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, w, h);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fboRBO);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+        std::cerr << "Virtual resolution FBO is not complete!" << std::endl;
+        virtualResEnabled = false;
+        destroyFBO();
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    if (!blitShader) initBlitResources();
+}
+
+void Renderer::clearVirtualResolution(){
+    destroyFBO();
+    virtualResEnabled = false;
+    virtualWidth = 0;
+    virtualHeight = 0;
+}
+
+void Renderer::beginVirtualFrame(){
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glViewport(0, 0, virtualWidth, virtualHeight);
+}
+
+void Renderer::endVirtualFrame(int windowW, int windowH){
+    flush();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    float scaleX = (float)windowW / (float)virtualWidth;
+    float scaleY = (float)windowH / (float)virtualHeight;
+    float scale = 0;
+    if (scaleX < scaleY){
+        scale = scaleX;
+    }else{
+        scale = scaleY;
+    }
+
+    int scaledW = (int)(virtualWidth * scale);
+    int scaledH = (int)(virtualHeight * scale);
+    int offsetX = (windowW - scaledW) / 2;
+    int offsetY = (windowH - scaledH) / 2;
+
+    glViewport(0, 0, windowW, windowH);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glViewport(offsetX, offsetY, scaledW, scaledH);
+
+    blitShader->use();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, fboTexture);
+
+    GLint loc = glGetUniformLocation(blitShader->program, "screenTexture");
+    glUniform1i(loc, 0);
+
+    glBindVertexArray(blitVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+
+    glViewport(0, 0, windowW, windowH);
 }
