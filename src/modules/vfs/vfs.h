@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <cstdint>
 
 struct FileEntry{
     uint64_t offset;
@@ -38,5 +39,5 @@ private:
 
     bool loadPackageData();
     std::string getExePath();
-    std::string VFS::getWorkingDirectory();
+    std::string getWorkingDirectory();
 };

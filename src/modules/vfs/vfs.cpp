@@ -18,7 +18,7 @@ namespace fs = std::filesystem;
 struct Footer{
     uint64_t offset;
     uint64_t size;
-    char magic[8];
+    char magic[7];
 };
 
 VFS& VFS::get(){

@@ -14,6 +14,7 @@ std::string getCurrentExeName() {
     return std::string(path);
 }
 #else
+#include <sys/stat.h>
 #include <unistd.h>
 #include <limits.h>
 std::string getCurrentExeName() {
@@ -31,6 +32,7 @@ std::vector<std::string> findFiles(){
     for (auto& entry: fs::recursive_directory_iterator(".")){
         if (entry.is_regular_file()){
             std::string ext = entry.path().extension().string();
+            if (ext.find("./build") == 0 || ext.find(".\\build") == 0) continue;
             // we should check all formats in an array or smth
             //if (ext == ".lua" || ext == ".png" || ext == ".wav" || ext == ".ttf" || ext == ".dll"  || ext == ".so"  || ext == ".mp3"){
                 files.push_back(entry.path().string());
@@ -58,7 +60,6 @@ int buildProject(const std::string& platform){
     if (platform == "windows"){
         exeExt += ".exe";
     }else if (platform == "linux"){
-        // it wont compile to linux, i am too fucking lazy to do this, may do it in the future
         exeExt += "";
     }else{
         std::cerr << "Unknown platform: " << platform << std::endl;
@@ -109,6 +110,28 @@ int buildProject(const std::string& platform){
                     std::string ext = entry.path().extension().string();
                     
                     if (ext == ".dll") {
+                        fs::path destFile = buildDir / filename;
+                        fs::copy_file(entry.path(), destFile, fs::copy_options::overwrite_existing);
+                        std::cout << "  Copied: " << filename << std::endl;
+                    }
+                }
+            }
+        } catch (std::exception& e) {
+            std::cerr << Colors::YELLOW << "Warning: Failed to copy some dependencies: " << e.what() << std::endl;
+        }
+    }
+    #endif
+
+    #ifdef __linux__
+    if (platform == "linux") {
+        std::cout << Colors::CYAN << "Copying dependencies:" << std::endl;
+
+        try {
+            for (auto& entry : fs::directory_iterator(engineDir)) {
+                if (entry.is_regular_file()) {
+                    std::string filename = entry.path().filename().string();
+
+                    if (filename.find(".so") != std::string::npos) {
                         fs::path destFile = buildDir / filename;
                         fs::copy_file(entry.path(), destFile, fs::copy_options::overwrite_existing);
                         std::cout << "  Copied: " << filename << std::endl;
@@ -173,7 +196,7 @@ int buildProject(const std::string& platform){
     
     Footer footer;
     footer.offset = offset;
-    footer.size = static_cast<uint64_t>(fs::file_size(outPath)) - offset;
+    footer.size = static_cast<uint64_t>(fs::file_size(outPath)) - offset + sizeof(Footer);
     out.write((char*)&footer, sizeof(footer));
     out.close();
     
