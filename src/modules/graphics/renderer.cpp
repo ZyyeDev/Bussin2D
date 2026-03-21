@@ -334,6 +334,14 @@ bool Renderer::editPixelBMP(int x, int y, RGBA color, const int textureId){
     return true;
 }
 
+void Renderer::setBaseTextureShader(int id){
+    auto it = shaders.find(id);
+    
+    if (it != shaders.end()){
+        baseTextureShader = it->second;
+    }
+}
+
 void Renderer::drawTexture(int textureId, int x, int y, int h, int w){
     auto it = textures.find(textureId);
     if (it == textures.end()){
@@ -361,8 +369,13 @@ void Renderer::drawTexture(int textureId, int x, int y, int h, int w){
 
     std::shared_ptr<Shader> shaderToUse;
     if (currentShader != defaultShader){
+        // custom shader
         shaderToUse = currentShader;
-    }else{
+    } else if (baseTextureShader){
+        // atlas-slice shader
+        shaderToUse = baseTextureShader;
+    } else {
+        // plain texture
         shaderToUse = textureShader;
     }
 
@@ -538,9 +551,9 @@ void Renderer::drawText(int fontId, const std::string text, float x, float y, un
 
 void Renderer::flush() {
     if (drawcallBatch.empty()) return;
-
-    currentShader->use();
-    currentShader->setMat4("projection", projectionMatrix);
+    
+    defaultShader->use();
+    defaultShader->setMat4("projection", projectionMatrix);
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 

@@ -106,6 +106,8 @@ public:
     bool hasVirtualResolution() const { return virtualResEnabled; }
     int getVirtualWidth() const { return virtualWidth; }
     int getVirtualHeight() const { return virtualHeight; }
+    
+    void setBaseTextureShader(int id);
 
     void beginVirtualFrame();
     void endVirtualFrame(int windowW, int windowH);
@@ -117,6 +119,7 @@ private:
     std::shared_ptr<Shader> defaultShader;
     std::shared_ptr<Shader> currentShader;
     std::shared_ptr<Shader> textureShader;
+    std::shared_ptr<Shader> baseTextureShader;
     std::unordered_map<int, std::shared_ptr<Shader>> shaders;
     int nextShaderId;
 

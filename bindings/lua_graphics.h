@@ -353,6 +353,16 @@ static int lua_graphics_drawText(lua_State* L){
     return 0;
 }
 
+// Lua: buss.graphics.setBaseTextureShader(shaderId)
+static int lua_graphics_setBaseTextureShader(lua_State* L) {
+    if (!g_renderer) init_renderer();
+    int shaderId = luaL_checkinteger(L, 1);
+    if (g_renderer) {
+        g_renderer->setBaseTextureShader(shaderId);
+    }
+    return 0;
+}
+
 void register_graphics_bindings(lua_State* L){
     lua_getglobal(L, "buss");
     if (lua_isnil(L, -1)){
@@ -421,6 +431,9 @@ void register_graphics_bindings(lua_State* L){
 
     lua_pushcfunction(L, lua_graphics_changePixel);
     lua_setfield(L, -2, "changePixel");
+
+    lua_pushcfunction(L, lua_graphics_setBaseTextureShader);
+    lua_setfield(L, -2, "setBaseTextureShader");
 
     lua_setfield(L, -2, "graphics");
     lua_setglobal(L, "buss");
