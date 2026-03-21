@@ -72,6 +72,9 @@ void callLuaCallback(lua_State* L, const char* name, double dt = -1.0){
     lua_pop(L, 1);
 }
 
+static bool g_pending_resize = false;
+static int  g_resize_w = 0, g_resize_h = 0;
+
 void handleEvent(const SDL_Event& event){
     if (g_keyboard) g_keyboard->handleEvent(event);
     if (g_mouse) g_mouse->handleEvent(event);
@@ -86,8 +89,14 @@ void pullEventsWithInput(){
             g_window->isRunning = false;
         }
         if (event.type == SDL_WINDOWEVENT){
-            if (event.window.event == SDL_WINDOWEVENT_RESIZED){
-
+            if (event.window.event == SDL_WINDOWEVENT_RESIZED ||
+                event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED){
+                int w = event.window.data1;
+                int h = event.window.data2;
+                if (g_window) g_window->onResize(w, h);
+                g_pending_resize = true;
+                g_resize_w = w;
+                g_resize_h = h;
             }
         }
         handleEvent(event);
@@ -240,6 +249,27 @@ int main(int argc, char* argv[]){
         }
 
         g_window->clear(0, 0, 0);
+        
+        // buss.resize
+        if (g_pending_resize){
+            lua_getglobal(L, "buss");
+            if (lua_istable(L, -1)){
+                lua_getfield(L, -1, "resize");
+                if (lua_isfunction(L, -1)){
+                    lua_pushinteger(L, g_resize_w);
+                    lua_pushinteger(L, g_resize_h);
+                    if (lua_pcall(L, 2, 0, 0) != LUA_OK){
+                        std::cerr << "Lua error: " << lua_tostring(L, -1) << std::endl;
+                        lua_pop(L, 1);
+                    }
+                } else {
+                    lua_pop(L, 1);
+                }
+            }
+            lua_pop(L, 1);
+            g_pending_resize = false;
+        }
+
         callLuaCallback(L, "draw");
         g_renderer->flush();
         g_window->present();
