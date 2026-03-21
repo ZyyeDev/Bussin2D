@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 
 #include "plugin.h"
 #include "plugin_interface.h"
