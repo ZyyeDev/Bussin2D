@@ -23,7 +23,8 @@ jobs:
             libsdl2-image-dev \
             libsdl2-mixer-dev \
             libluajit-5.1-dev \
-            libgl1-mesa-dev
+            libgl1-mesa-dev \
+            libcurl4-openssl-dev
 
       - name: Configure CMake
         run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
@@ -31,10 +32,38 @@ jobs:
       - name: Build
         run: cmake --build build --config Release -j$(nproc)
 
+      - name: Bundle dependencies
+        run: |
+          mkdir -p bundle/lib
+          cp build/template_linux bundle/template_linux
+          cp build/Bussin2D bundle/Bussin2D
+
+          for bin in bundle/template_linux bundle/Bussin2D; do
+            ldd $bin | awk '/=>/ { print $3 }' | while read lib; do
+              if [ -f "$lib" ]; then
+                cp "$lib" bundle/lib/
+              fi
+            done
+          done
+
+          cat > bundle/run_bussin2d.sh << 'EOF'
+          #!/bin/bash
+          DIR="$(cd "$(dirname "$0")" && pwd)"
+          export LD_LIBRARY_PATH="$DIR/lib:$LD_LIBRARY_PATH"
+          "$DIR/Bussin2D" "$@"
+          EOF
+
+          cat > bundle/run_template.sh << 'EOF'
+          #!/bin/bash
+          DIR="$(cd "$(dirname "$0")" && pwd)"
+          export LD_LIBRARY_PATH="$DIR/lib:$LD_LIBRARY_PATH"
+          "$DIR/template_linux" "$@"
+          EOF
+
+          chmod +x bundle/run_bussin2d.sh bundle/run_template.sh
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: bussin2d-linux
-          path: |
-            build/template_linux
-            build/Bussin2D
+          path: bundle/
